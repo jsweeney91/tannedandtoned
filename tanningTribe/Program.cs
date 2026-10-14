@@ -78,6 +78,15 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 
 await SeedData.InitializeAsync(app.Services);
 
+{
+    var admin = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<AdminSettings>>().Value;
+    var hash = admin.PasswordHash ?? string.Empty;
+    var parts = hash.Split('.');
+    app.Logger.LogInformation(
+        "Admin config: Username='{Username}', PasswordHash length={Length}, parts={Parts}, placeholder={IsPlaceholder}, startsWith='{Prefix}'",
+        admin.Username, hash.Length, parts.Length, hash.Contains("SET_IN_USER_SECRETS"), hash.Length >= 8 ? hash[..8] : hash);
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
