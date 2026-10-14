@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+	<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+	  <stop offset="0" stop-color="#f1d58a"/>
+	  <stop offset="1" stop-color="#c2963f"/>
+	</linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="92" fill="none" stroke="url(#gold)" stroke-width="4"/>
+  <circle cx="100" cy="100" r="82" fill="none" stroke="url(#gold)" stroke-width="1.5" opacity=".6"/>
+  <circle cx="118" cy="58" r="16" fill="url(#gold)"/>
+  <g stroke="url(#gold)" stroke-width="3" stroke-linecap="round">
+	<line x1="118" y1="30" x2="118" y2="36"/>
+	<line x1="140" y1="40" x2="136" y2="44"/>
+	<line x1="146" y1="58" x2="140" y2="58"/>
+	<line x1="96" y1="40" x2="100" y2="44"/>
+	<line x1="90" y1="58" x2="96" y2="58"/>
+  </g>
+  <path d="M60 130 C60 110 62 95 64 80" stroke="url(#gold)" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M64 80 C50 66 36 70 30 80 C44 72 56 76 64 80 Z" fill="url(#gold)"/>
+  <path d="M64 80 C58 62 66 48 78 46 C68 56 66 68 64 80 Z" fill="url(#gold)"/>
+  <path d="M64 80 C76 66 92 68 100 78 C86 72 74 74 64 80 Z" fill="url(#gold)"/>
+  <path d="M64 80 C78 82 90 92 92 104 C84 92 74 86 64 80 Z" fill="url(#gold)"/>
+  <path d="M74 132 C84 128 96 124 108 116 C116 110 122 104 132 108 C140 112 150 118 158 122 C162 124 166 128 166 132 Z" fill="url(#gold)"/>
+  <circle cx="134" cy="98" r="8" fill="url(#gold)"/>
+  <path d="M40 142 Q100 134 160 142" stroke="url(#gold)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M52 152 Q100 146 148 152" stroke="url(#gold)" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/>
+</svg>

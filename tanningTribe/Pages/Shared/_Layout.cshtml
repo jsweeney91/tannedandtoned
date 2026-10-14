@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Tanned and Toned</title>
+    <meta name="theme-color" content="#070707" />
+    <link rel="icon" type="image/jpeg" href="~/images/logo.JPG" />
+    <link rel="apple-touch-icon" href="~/images/logo.JPG" />
+    <meta property="og:site_name" content="Tanned &amp; Toned by Tan Tribe" />
+    <meta property="og:title" content="@ViewData["Title"] - Tanned and Toned" />
+    <meta property="og:image" content="~/images/logo.JPG" />
+    <script type="importmap"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/tanningTribe.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-dark bg-brand border-bottom mb-3">
+            <div class="container">
+                <a class="navbar-brand brand-logo d-flex align-items-center" asp-area="" asp-page="/Index">
+                    <img src="~/images/logo.JPG" alt="Tanned &amp; Toned" class="nav-logo" />
+                    <span class="d-flex flex-column lh-1">
+                        <span>Tanned <span>&amp;</span> Toned</span>
+                        <small class="brand-tagline">by Tan Tribe</small>
+                    </span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-page="/Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-page="/Shop/Index">Shop</a>
+                        </li>
+                    </ul>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a class="btn btn-outline-gold btn-sm me-2" asp-page="/Admin/Index">Admin</a>
+                    }
+                    <a class="btn btn-outline-light btn-sm position-relative px-3" asp-page="/Cart/Index">
+                        &#128717; Bag
+                        @{
+                            var cartCount = Cart.Count();
+                        }
+                        @if (cartCount > 0)
+                        {
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">@cartCount</span>
+                        }
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - Tanned &amp; Toned by Tan Tribe &middot; Tan Smarter, Not Harder &middot; <a asp-area="" asp-page="/Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

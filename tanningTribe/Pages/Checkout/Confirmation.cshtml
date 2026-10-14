@@ -1,0 +1,35 @@
+@page "{id:int}"
+@model tanningTribe.Pages.Checkout.ConfirmationModel
+@{
+    ViewData["Title"] = "Order Received";
+}
+
+<div class="bg-white rounded-4 p-5 text-center">
+    <p class="brand-tagline mb-2">Order received</p>
+    <h1 class="mb-3">Thank you, @Model.Order.CustomerName!</h1>
+    <p class="lead">Your order <strong>@Model.Order.OrderNumber</strong> is awaiting approval.</p>
+    <p class="text-muted">Once we've reviewed it, we'll send a WhatsApp message to <strong>@Model.Order.WhatsAppNumber</strong> with your order summary and payment details. Please use <strong>@Model.Order.OrderNumber</strong> as your bank transfer reference. Keep an eye on your phone! 💛</p>
+
+    <div class="mx-auto text-start mt-4" style="max-width: 480px">
+        @foreach (var item in Model.Order.Items)
+        {
+            <div class="d-flex justify-content-between py-1">
+                <span>@item.ProductName <span class="text-muted">&times; @item.Quantity</span></span>
+                <span>@((item.UnitPrice * item.Quantity).ToString("C"))</span>
+            </div>
+        }
+        @if (Model.Order.DiscountAmount > 0)
+        {
+            <div class="d-flex justify-content-between py-1 text-success">
+                <span>Referral discount (@Model.Order.ReferralCodeUsed)</span>
+                <span>-@Model.Order.DiscountAmount.ToString("C")</span>
+            </div>
+        }
+        <div class="d-flex justify-content-between pt-3 mt-2 border-top fw-semibold">
+            <span>Total</span>
+            <span>@Model.Order.Total.ToString("C")</span>
+        </div>
+    </div>
+
+    <a asp-page="/Shop/Index" class="btn btn-brand mt-4">Continue Shopping</a>
+</div>

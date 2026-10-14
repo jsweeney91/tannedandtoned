@@ -1,0 +1,92 @@
+@page "{id:int?}"
+@model tanningTribe.Pages.Admin.Products.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Add Product" : "Edit Product";
+}
+
+<a asp-page="/Admin/Products/Index" class="link-gold small">&larr; Back to products</a>
+<h1 class="h3 mt-2 mb-4">@ViewData["Title"]</h1>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Input.Id" />
+    <input type="hidden" asp-for="Input.ImageUrl" />
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="bg-white rounded-4 p-4">
+                <div class="mb-3">
+                    <label asp-for="Input.Name" class="form-label">Name</label>
+                    <input asp-for="Input.Name" class="form-control" />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Slug" class="form-label">URL slug <span class="text-muted">(leave blank to generate from name)</span></label>
+                    <input asp-for="Input.Slug" class="form-control" />
+                    <span asp-validation-for="Input.Slug" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Category" class="form-label">Category</label>
+                    <input asp-for="Input.Category" class="form-control" list="categories" />
+                    <datalist id="categories">
+                        @foreach (var c in Model.Categories)
+                        {
+                            <option value="@c"></option>
+                        }
+                    </datalist>
+                    <span asp-validation-for="Input.Category" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Description" class="form-label">Description</label>
+                    <textarea asp-for="Input.Description" class="form-control" rows="5"></textarea>
+                    <span asp-validation-for="Input.Description" class="text-danger"></span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-sm-4">
+                        <label asp-for="Input.Price" class="form-label">Price (&pound;)</label>
+                        <input asp-for="Input.Price" class="form-control" step="0.01" />
+                        <span asp-validation-for="Input.Price" class="text-danger"></span>
+                    </div>
+                    <div class="col-sm-4">
+                        <label asp-for="Input.StockQuantity" class="form-label">Stock</label>
+                        <input asp-for="Input.StockQuantity" class="form-control" />
+                        <span asp-validation-for="Input.StockQuantity" class="text-danger"></span>
+                    </div>
+                    <div class="col-sm-4 d-flex align-items-end">
+                        <div class="form-check">
+                            <input asp-for="Input.IsFeatured" class="form-check-input" />
+                            <label asp-for="Input.IsFeatured" class="form-check-label">Featured on home page</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="bg-white rounded-4 p-4">
+                <h2 class="h6 mb-3">Product image</h2>
+                <img id="imagePreview" src="@(string.IsNullOrEmpty(Model.Input.ImageUrl) ? "https://placehold.co/600x600/171717/d8ad5a?text=No+image" : Model.Input.ImageUrl)" alt="" class="img-fluid rounded-3 mb-3 w-100 object-fit-cover" style="aspect-ratio: 1/1" />
+                <div class="mb-3">
+                    <label asp-for="ImageFile" class="form-label">Upload new image</label>
+                    <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" onchange="previewImage(this)" />
+                    <div class="form-text">JPG, PNG, WEBP or GIF, up to 5 MB. Square images look best.</div>
+                </div>
+                <div class="mb-0">
+                    <label asp-for="ImageUrlOverride" class="form-label">…or paste an image URL</label>
+                    <input asp-for="ImageUrlOverride" class="form-control" placeholder="https://" />
+                </div>
+            </div>
+            <button type="submit" class="btn btn-brand w-100 mt-3">@(Model.IsNew ? "Create product" : "Save changes")</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                document.getElementById('imagePreview').src = URL.createObjectURL(input.files[0]);
+            }
+        }
+    </script>
+}

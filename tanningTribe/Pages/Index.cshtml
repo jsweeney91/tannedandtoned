@@ -1,0 +1,114 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+<section class="hero mb-5">
+    <div class="hero-glow"></div>
+    <div class="hero-sparkles" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <div class="row align-items-center position-relative">
+        <div class="col-lg-7 text-center text-lg-start">
+            <p class="brand-tagline mb-3">Look Good &middot; Feel Good &middot; Be Confident</p>
+            <h1 class="hero-title">Tan Smarter,<br /><em>Not Harder.</em></h1>
+            <p class="lead mb-4">Premium tanning lotions, self-tanners and after-sun care for a deeper, longer-lasting glow. Salon results, at home.</p>
+            <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-lg-start">
+                <a class="btn btn-brand btn-lg px-4" asp-page="/Shop/Index">Shop the Collection</a>
+                @if (Model.Categories.Count > 0)
+                {
+                    <a class="btn btn-outline-gold btn-lg px-4" asp-page="/Shop/Index" asp-route-category="@Model.Categories[0]">@Model.Categories[0]</a>
+                }
+            </div>
+            <ul class="hero-trust list-unstyled d-flex flex-wrap gap-4 mt-4 mb-0 justify-content-center justify-content-lg-start">
+                <li>&#10003; Free UK delivery over &pound;40</li>
+                <li>&#10003; Order via WhatsApp &amp; bank transfer</li>
+                <li>&#10003; Friends &amp; Family rewards</li>
+            </ul>
+        </div>
+        <div class="col-lg-5 d-none d-lg-flex justify-content-center">
+            <img src="~/images/logo.JPG" alt="Tanned &amp; Toned" class="hero-emblem" />
+        </div>
+    </div>
+</section>
+
+@if (Model.Categories.Count > 0)
+{
+<section class="mb-5">
+    <div class="section-heading">
+        <p class="brand-tagline mb-1">Shop by category</p>
+        <h2>Find Your Glow</h2>
+    </div>
+    <div class="row g-3">
+        @foreach (var category in Model.Categories)
+        {
+            <div class="col-6 col-md-3">
+                <a class="category-tile" asp-page="/Shop/Index" asp-route-category="@category">
+                    <span class="category-tile-icon">@IndexModel.IconFor(category)</span>
+                    <span>@category</span>
+                </a>
+            </div>
+        }
+    </div>
+</section>
+}
+
+<section class="mb-5">
+    <div class="section-heading d-flex justify-content-between align-items-end">
+        <div>
+            <p class="brand-tagline mb-1">Customer favourites</p>
+            <h2 class="mb-0">Featured Products</h2>
+        </div>
+        <a asp-page="/Shop/Index" class="link-gold">View all &rarr;</a>
+    </div>
+    <div class="row g-4">
+        @foreach (var p in Model.Featured)
+        {
+            <div class="col-6 col-md-3">
+                <partial name="_ProductCard" model="p" />
+            </div>
+        }
+    </div>
+</section>
+
+<section class="mb-5">
+    <div class="row g-4 text-center">
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon">&#9728;</div>
+                <h3 class="h6 feature-title">Enhances Your Tan</h3>
+                <p class="mb-0">Salon-grade bronzers and accelerators for a deeper, longer-lasting glow.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon">&#9829;</div>
+                <h3 class="h6 feature-title">Feel Better Every Day</h3>
+                <p class="mb-0">After-sun care and skin prep that keeps you looking and feeling confident.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon">&#127873;</div>
+                <h3 class="h6 feature-title">Friends &amp; Family Rewards</h3>
+                <p class="mb-0">Every order unlocks a shareable 10% discount code for the people you love.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="referral-banner mb-5">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+            <p class="brand-tagline mb-1">Your glow, their gift</p>
+            <h2 class="mb-2">Discount Code <em>for Friends &amp; Family</em></h2>
+            <p class="mb-0">Once your order is paid, we'll send you your own personal code to share. Everyone who uses it saves 10%.</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            <a class="btn btn-brand btn-lg" asp-page="/Shop/Index">Start Shopping</a>
+        </div>
+    </div>
+</section>
+
+<p class="text-center brand-tagline mb-0">&#9829; Thank you for choosing Tanned &amp; Toned &#9829;</p>

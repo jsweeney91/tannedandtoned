@@ -1,0 +1,42 @@
+@page
+@model tanningTribe.Pages.Admin.Products.IndexModel
+@{
+    ViewData["Title"] = "Products";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Products</h1>
+    <a asp-page="/Admin/Products/Edit" class="btn btn-brand btn-sm">+ Add product</a>
+</div>
+
+@if (TempData["Message"] is string msg)
+{
+    <div class="alert alert-success py-2">@msg</div>
+}
+
+<div class="bg-white rounded-4 p-3">
+    <table class="table align-middle mb-0">
+        <thead>
+            <tr><th></th><th>Name</th><th>Category</th><th class="text-end">Price</th><th class="text-end">Stock</th><th>Featured</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model.Products)
+            {
+                <tr>
+                    <td style="width: 64px"><img src="@p.ImageUrl" alt="" width="56" height="56" class="rounded object-fit-cover" /></td>
+                    <td>@p.Name<br /><small class="text-muted">/shop/@p.Slug</small></td>
+                    <td>@p.Category</td>
+                    <td class="text-end">@p.Price.ToString("C")</td>
+                    <td class="text-end @(p.StockQuantity == 0 ? "text-danger" : p.StockQuantity <= 5 ? "text-warning" : "")">@p.StockQuantity</td>
+                    <td>@(p.IsFeatured ? "★" : "")</td>
+                    <td class="text-end text-nowrap">
+                        <a asp-page="/Admin/Products/Edit" asp-route-id="@p.Id" class="btn btn-outline-gold btn-sm">Edit</a>
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@p.Id" class="d-inline" onsubmit="return confirm('Delete @p.Name.Replace("'", "\\'")? This cannot be undone.');">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

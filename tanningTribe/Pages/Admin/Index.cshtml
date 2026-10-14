@@ -1,0 +1,87 @@
+@page
+@model tanningTribe.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h1 class="h3 mb-4">Dashboard</h1>
+
+@if (Model.PendingApproval > 0)
+{
+    <a asp-page="/Admin/Orders/Index" asp-route-status="PendingApproval" class="alert alert-warning d-block text-decoration-none py-2 mb-4">
+        <strong>@Model.PendingApproval</strong> order@(Model.PendingApproval == 1 ? "" : "s") waiting for your approval &rarr;
+    </a>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <span class="stat-label">Revenue (paid)</span>
+            <span class="stat-value">@Model.Revenue.ToString("C")</span>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <span class="stat-label">Pending approval</span>
+            <span class="stat-value">@Model.PendingApproval</span>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <span class="stat-label">Referral codes</span>
+            <span class="stat-value">@Model.ReferralCodes</span>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card">
+            <span class="stat-label">Referral uses</span>
+            <span class="stat-value">@Model.ReferralUses</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="bg-white rounded-4 p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="h6 mb-0">Recent orders</h2>
+                <a asp-page="/Admin/Orders/Index" class="link-gold small">View all &rarr;</a>
+            </div>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>#</th><th>Customer</th><th>Status</th><th class="text-end">Total</th></tr></thead>
+                <tbody>
+                    @foreach (var o in Model.RecentOrders)
+                    {
+                        <tr>
+                            <td><a asp-page="/Admin/Orders/Details" asp-route-id="@o.Id">@o.OrderNumber</a></td>
+                            <td>@o.CustomerName<br /><small class="text-muted">@o.CustomerEmail</small></td>
+                            <td><partial name="_OrderStatusBadge" model="o.Status" /></td>
+                            <td class="text-end">@o.Total.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="bg-white rounded-4 p-3">
+            <h2 class="h6 mb-2">Low stock</h2>
+            @if (Model.LowStock.Count == 0)
+            {
+                <p class="text-muted small mb-0">All products are well stocked.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0">
+                    @foreach (var p in Model.LowStock)
+                    {
+                        <li class="d-flex justify-content-between py-1 border-bottom">
+                            <a asp-page="/Admin/Products/Edit" asp-route-id="@p.Id">@p.Name</a>
+                            <span class="@(p.StockQuantity == 0 ? "text-danger" : "text-warning")">@p.StockQuantity left</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>

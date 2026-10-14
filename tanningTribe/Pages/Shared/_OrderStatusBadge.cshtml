@@ -1,0 +1,13 @@
+@model OrderStatus
+@{
+    var (css, label) = Model switch
+    {
+        OrderStatus.PendingApproval => ("bg-warning text-dark", "Pending approval"),
+        OrderStatus.Approved => ("bg-primary", "Approved – awaiting payment"),
+        OrderStatus.Paid => ("bg-success", "Paid"),
+        OrderStatus.Shipped => ("bg-info text-dark", "Shipped"),
+        OrderStatus.Rejected => ("bg-danger", "Rejected"),
+        _ => ("bg-secondary", Model.ToString())
+    };
+}
+<span class="badge @css">@label</span>

@@ -1,0 +1,111 @@
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using tanningTribe.Data;
+using tanningTribe.Models;
+using tanningTribe.Services;
+
+namespace tanningTribe.Pages.Checkout;
+
+public class IndexModel(StoreDbContext db, CartService cart, ReferralService referrals, WhatsAppService whatsApp, OrderNumberService orderNumbers) : PageModel
+{
+    public class InputModel
+    {
+        [Required, MaxLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required, EmailAddress, MaxLength(200)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required, MaxLength(30), Display(Name = "WhatsApp number")]
+        public string WhatsAppNumber { get; set; } = string.Empty;
+
+        [Required, MaxLength(500), Display(Name = "Delivery address")]
+        public string ShippingAddress { get; set; } = string.Empty;
+
+        [MaxLength(20)]
+        public string? ReferralCode { get; set; }
+
+        [MaxLength(1000)]
+        public string? Notes { get; set; }
+    }
+
+    [BindProperty]
+    public InputModel Input { get; set; } = new();
+
+    public List<CartItem> Items { get; private set; } = [];
+    public decimal Total { get; private set; }
+
+    public IActionResult OnGet()
+    {
+        Load();
+        return Items.Count == 0 ? RedirectToPage("/Cart/Index") : Page();
+    }
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        Load();
+        if (Items.Count == 0)
+        {
+            return RedirectToPage("/Cart/Index");
+        }
+
+        var normalizedNumber = whatsApp.NormalizeNumber(Input.WhatsAppNumber);
+        if (normalizedNumber.Length < 8)
+        {
+            ModelState.AddModelError("Input.WhatsAppNumber", "Please enter a valid WhatsApp number.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return Page();
+        }
+
+        ReferralCode? referral = null;
+        if (!string.IsNullOrWhiteSpace(Input.ReferralCode))
+        {
+            referral = await referrals.ValidateAsync(Input.ReferralCode, Input.Email);
+            if (referral is null)
+            {
+                ModelState.AddModelError("Input.ReferralCode", "That referral code is invalid or can't be used on this order.");
+                return Page();
+            }
+        }
+
+        var discount = referral is null ? 0m : Math.Round(Total * referral.DiscountPercent / 100m, 2);
+
+        var order = new Order
+        {
+            OrderNumber = await orderNumbers.NextAsync(),
+            CustomerName = Input.Name.Trim(),
+            CustomerEmail = Input.Email.Trim(),
+            WhatsAppNumber = normalizedNumber,
+            ShippingAddress = Input.ShippingAddress.Trim(),
+            CustomerNotes = string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
+            Total = Total - discount,
+            DiscountAmount = discount,
+            ReferralCodeUsed = referral?.Code,
+            Status = OrderStatus.PendingApproval,
+            Items = Items.Select(i => new OrderItem
+            {
+                ProductId = i.ProductId,
+                ProductName = i.Name,
+                UnitPrice = i.UnitPrice,
+                Quantity = i.Quantity
+            }).ToList()
+        };
+
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+
+        cart.Clear();
+        ConfirmationModel.RememberOrder(HttpContext.Session, order.Id);
+        return RedirectToPage("/Checkout/Confirmation", new { id = order.Id });
+    }
+
+    private void Load()
+    {
+        Items = cart.GetItems();
+        Total = cart.Total();
+    }
+}

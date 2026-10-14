@@ -1,0 +1,88 @@
+@page
+@model tanningTribe.Pages.Admin.Orders.IndexModel
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Orders</h1>
+    <div class="btn-group btn-group-sm" role="group">
+        <a asp-page="/Admin/Orders/Index" class="btn @(Model.Status is null ? "btn-brand" : "btn-outline-gold")">All</a>
+        <a asp-page="/Admin/Orders/Index" asp-route-status="PendingApproval" class="btn @(Model.Status == OrderStatus.PendingApproval ? "btn-brand" : "btn-outline-gold")">Pending approval @(Model.PendingCount > 0 ? $"({Model.PendingCount})" : "")</a>
+        <a asp-page="/Admin/Orders/Index" asp-route-status="Approved" class="btn @(Model.Status == OrderStatus.Approved ? "btn-brand" : "btn-outline-gold")">Awaiting payment</a>
+        <a asp-page="/Admin/Orders/Index" asp-route-status="Paid" class="btn @(Model.Status == OrderStatus.Paid ? "btn-brand" : "btn-outline-gold")">To ship</a>
+        <a asp-page="/Admin/Orders/Index" asp-route-status="Shipped" class="btn @(Model.Status == OrderStatus.Shipped ? "btn-brand" : "btn-outline-gold")">Shipped</a>
+        <a asp-page="/Admin/Orders/Index" asp-route-status="Rejected" class="btn @(Model.Status == OrderStatus.Rejected ? "btn-brand" : "btn-outline-gold")">Rejected</a>
+    </div>
+</div>
+
+@if (TempData["Message"] is string msg)
+{
+    <div class="alert alert-success py-2">@msg</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger py-2">@err</div>
+}
+
+<div class="bg-white rounded-4 p-3">
+    <table class="table align-middle mb-0">
+        <thead>
+            <tr><th>#</th><th>Date</th><th>Customer</th><th>WhatsApp</th><th>Items</th><th>Referral</th><th>Status</th><th class="text-end">Total</th><th class="text-end">Actions</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var o in Model.Orders)
+            {
+                <tr class="@(o.Status == OrderStatus.PendingApproval ? "table-active" : "")">
+                    <td><a asp-page="/Admin/Orders/Details" asp-route-id="@o.Id"><strong>@o.OrderNumber</strong></a></td>
+                    <td>@o.CreatedUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                    <td>@o.CustomerName<br /><small class="text-muted">@o.CustomerEmail</small></td>
+                    <td><small><a href="https://wa.me/@o.WhatsAppNumber.TrimStart('+')" target="_blank" rel="noopener">@o.WhatsAppNumber</a></small></td>
+                    <td>@o.Items.Sum(i => i.Quantity)</td>
+                    <td>@(o.ReferralCodeUsed ?? "—")</td>
+                    <td>
+                        <partial name="_OrderStatusBadge" model="o.Status" />
+                        @if (o.Status is not OrderStatus.PendingApproval and not OrderStatus.Rejected && o.WhatsAppSentUtc is null)
+                        {
+                            <br /><small class="text-warning">WhatsApp not sent</small>
+                        }
+                    </td>
+                    <td class="text-end">@o.Total.ToString("C")</td>
+                    <td class="text-end text-nowrap">
+                        @if (o.Status == OrderStatus.PendingApproval)
+                        {
+                            <form method="post" asp-page-handler="Approve" asp-route-id="@o.Id" asp-route-status="@Model.Status" class="d-inline">
+                                <button class="btn btn-brand btn-sm">Approve</button>
+                            </form>
+                            <form method="post" asp-page-handler="Reject" asp-route-id="@o.Id" asp-route-status="@Model.Status" class="d-inline" onsubmit="return confirm('Reject order @(o.OrderNumber)?');">
+                                <button class="btn btn-outline-danger btn-sm">Reject</button>
+                            </form>
+                        }
+                        else if (o.Status == OrderStatus.Approved)
+                        {
+                            <form method="post" asp-page-handler="MarkPaid" asp-route-id="@o.Id" asp-route-status="@Model.Status" class="d-inline">
+                                <button class="btn btn-brand btn-sm">Mark paid</button>
+                            </form>
+                        }
+                        else if (o.Status == OrderStatus.Paid)
+                        {
+                            <form method="post" asp-page-handler="MarkShipped" asp-route-id="@o.Id" asp-route-status="@Model.Status" class="d-inline-flex gap-1">
+                                <input name="trackingNumber" class="form-control form-control-sm" style="width: 150px" placeholder="Tracking no." autocomplete="off" />
+                                <button class="btn btn-brand btn-sm">Mark shipped</button>
+                            </form>
+                        }
+                        else if (o.Status == OrderStatus.Shipped && !string.IsNullOrEmpty(o.TrackingNumber))
+                        {
+                            <a href="@WhatsAppService.TrackingUrl(o)" target="_blank" rel="noopener" class="btn btn-outline-gold btn-sm" title="@o.TrackingNumber">Track</a>
+                        }
+                        <a asp-page="/Admin/Orders/Details" asp-route-id="@o.Id" class="btn btn-outline-gold btn-sm">View</a>
+                    </td>
+                </tr>
+            }
+            @if (Model.Orders.Count == 0)
+            {
+                <tr><td colspan="9" class="text-center text-muted py-4">No orders here.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

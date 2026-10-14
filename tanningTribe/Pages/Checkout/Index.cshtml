@@ -1,0 +1,76 @@
+@page
+@model tanningTribe.Pages.Checkout.IndexModel
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h1 class="h3 mb-4">Checkout</h1>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="bg-white rounded-4 p-4">
+            <div class="alert alert-info py-2 small mb-4">
+                <strong>How it works:</strong> place your order and we'll review it. Once approved, you'll get a WhatsApp message with your order summary and payment details. Nothing is charged now.
+            </div>
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="mb-3">
+                    <label asp-for="Input.Name" class="form-label">Full name</label>
+                    <input asp-for="Input.Name" class="form-control" autocomplete="name" />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Input.Email" class="form-label">Email</label>
+                        <input asp-for="Input.Email" class="form-control" autocomplete="email" />
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.WhatsAppNumber" class="form-label">WhatsApp number</label>
+                        <input asp-for="Input.WhatsAppNumber" class="form-control" placeholder="07123 456789" autocomplete="tel" />
+                        <span asp-validation-for="Input.WhatsAppNumber" class="text-danger"></span>
+                        <div class="form-text">We'll send your payment details here.</div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.ShippingAddress" class="form-label">Delivery address</label>
+                    <textarea asp-for="Input.ShippingAddress" class="form-control" rows="3" autocomplete="street-address"></textarea>
+                    <span asp-validation-for="Input.ShippingAddress" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.ReferralCode" class="form-label">Referral code <span class="text-muted">(optional)</span></label>
+                    <input asp-for="Input.ReferralCode" class="form-control text-uppercase" placeholder="TANXXXXX" />
+                    <span asp-validation-for="Input.ReferralCode" class="text-danger"></span>
+                    <div class="form-text">Have a code from a friend? Get @ReferralService.DefaultDiscountPercent% off your order.</div>
+                </div>
+                <div class="mb-4">
+                    <label asp-for="Input.Notes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
+                    <textarea asp-for="Input.Notes" class="form-control" rows="2"></textarea>
+                    <span asp-validation-for="Input.Notes" class="text-danger"></span>
+                </div>
+                <button type="submit" class="btn btn-brand btn-lg w-100">Place Order</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="bg-white rounded-4 p-4">
+            <h2 class="h5 mb-3">Order Summary</h2>
+            @foreach (var item in Model.Items)
+            {
+                <div class="d-flex justify-content-between py-1">
+                    <span>@item.Name <span class="text-muted">&times; @item.Quantity</span></span>
+                    <span>@item.LineTotal.ToString("C")</span>
+                </div>
+            }
+            <div class="d-flex justify-content-between pt-3 mt-2 border-top fw-semibold">
+                <span>Total</span>
+                <span>@Model.Total.ToString("C")</span>
+            </div>
+            <p class="text-muted small mt-2 mb-0">Any referral discount is applied once your order is approved.</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

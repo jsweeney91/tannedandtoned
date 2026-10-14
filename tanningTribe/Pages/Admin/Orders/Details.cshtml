@@ -1,0 +1,140 @@
+@page "{id:int}"
+@model tanningTribe.Pages.Admin.Orders.DetailsModel
+@{
+    ViewData["Title"] = $"Order {Model.Order.OrderNumber}";
+}
+
+<a asp-page="/Admin/Orders/Index" class="link-gold small">&larr; Back to orders</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-2 mb-4">
+    <h1 class="h3 mb-0">Order @Model.Order.OrderNumber <partial name="_OrderStatusBadge" model="Model.Order.Status" /></h1>
+    <div class="d-flex flex-wrap gap-2">
+        @if (Model.Order.Status == OrderStatus.PendingApproval)
+        {
+            <form method="post" asp-page-handler="Approve"><button class="btn btn-brand btn-sm">Approve</button></form>
+            <form method="post" asp-page-handler="Reject" onsubmit="return confirm('Reject this order?');"><button class="btn btn-outline-danger btn-sm">Reject</button></form>
+        }
+        @if (Model.Order.Status == OrderStatus.Approved)
+        {
+            <form method="post" asp-page-handler="MarkPaid"><button class="btn btn-brand btn-sm">Mark as paid</button></form>
+            <form method="post" asp-page-handler="Reject" onsubmit="return confirm('Reject this order?');"><button class="btn btn-outline-danger btn-sm">Reject</button></form>
+        }
+        @if (Model.Order.Status == OrderStatus.Paid)
+        {
+            <form method="post" asp-page-handler="MarkShipped" class="d-flex gap-2">
+                <input name="trackingNumber" class="form-control form-control-sm" style="width: 190px" placeholder="Royal Mail tracking no." autocomplete="off" />
+                <button class="btn btn-brand btn-sm text-nowrap">Mark as shipped</button>
+            </form>
+        }
+        @if (Model.Order.Status == OrderStatus.Rejected)
+        {
+            <form method="post" asp-page-handler="Reopen"><button class="btn btn-outline-gold btn-sm">Reopen</button></form>
+        }
+    </div>
+</div>
+
+@if (TempData["Message"] is string msg)
+{
+    <div class="alert alert-success py-2">@msg</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger py-2">@err</div>
+}
+@if (Model.Order.Status == OrderStatus.PendingApproval)
+{
+    <div class="alert alert-info py-2">Bank details are only shown after you <strong>Approve</strong> this order. The optional message below just lets the customer know you've received it.</div>
+}
+@if (Model.Order.Status is not OrderStatus.PendingApproval and not OrderStatus.Rejected && Model.Order.WhatsAppSentUtc is null)
+{
+    <div class="alert alert-warning py-2"><strong>Next step:</strong> send the customer the WhatsApp message below, then tick <em>Mark as sent</em>.</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="bg-white rounded-4 p-3 mb-4">
+            <h2 class="h6">Items</h2>
+            <table class="table table-sm mb-0">
+                <thead><tr><th>Product</th><th>Qty</th><th class="text-end">Unit</th><th class="text-end">Line</th></tr></thead>
+                <tbody>
+                    @foreach (var i in Model.Order.Items)
+                    {
+                        <tr>
+                            <td>@i.ProductName</td>
+                            <td>@i.Quantity</td>
+                            <td class="text-end">@i.UnitPrice.ToString("C")</td>
+                            <td class="text-end">@((i.UnitPrice * i.Quantity).ToString("C"))</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    @if (Model.Order.DiscountAmount > 0)
+                    {
+                        <tr><td colspan="3" class="text-end text-success">Referral discount (@Model.Order.ReferralCodeUsed)</td><td class="text-end text-success">-@Model.Order.DiscountAmount.ToString("C")</td></tr>
+                    }
+                    <tr class="fw-semibold"><td colspan="3" class="text-end">Total</td><td class="text-end">@Model.Order.Total.ToString("C")</td></tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="bg-white rounded-4 p-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <div>
+                    <h2 class="h6 mb-0">WhatsApp message</h2>
+                    <small class="text-muted">@Model.MessageTitle &middot; to @Model.Order.WhatsAppNumber</small>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-gold btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('waPreview').innerText);this.textContent='Copied!'">Copy</button>
+                    <a class="btn btn-brand btn-sm" target="_blank" rel="noopener" href="@Model.WhatsAppLink">Open in WhatsApp</a>
+                    @if (Model.Order.Status is not OrderStatus.PendingApproval and not OrderStatus.Rejected)
+                    {
+                        <form method="post" asp-page-handler="MarkSent" class="d-inline">
+                            <button class="btn btn-sm @(Model.Order.WhatsAppSentUtc is null ? "btn-outline-success" : "btn-success")">
+                                @(Model.Order.WhatsAppSentUtc is null ? "Mark as sent" : "✓ Sent")
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+            <pre id="waPreview" class="wa-preview mb-0">@Model.MessagePreview</pre>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="bg-white rounded-4 p-3 mb-3">
+            <h2 class="h6">Customer</h2>
+            <p class="mb-1">@Model.Order.CustomerName</p>
+            <p class="mb-1"><a href="mailto:@Model.Order.CustomerEmail">@Model.Order.CustomerEmail</a></p>
+            <p class="mb-1"><a href="https://wa.me/@Model.Order.WhatsAppNumber.TrimStart('+')" target="_blank" rel="noopener">@Model.Order.WhatsAppNumber</a></p>
+            <p class="text-muted small mb-0" style="white-space: pre-line">@Model.Order.ShippingAddress</p>
+            @if (!string.IsNullOrEmpty(Model.Order.CustomerNotes))
+            {
+                <hr />
+                <p class="small mb-0"><span class="text-muted">Notes:</span> @Model.Order.CustomerNotes</p>
+            }
+        </div>
+        <div class="bg-white rounded-4 p-3">
+            <h2 class="h6">Timeline</h2>
+            <p class="small mb-1"><span class="text-muted">Placed:</span> @Model.Order.CreatedUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</p>
+            <p class="small mb-1"><span class="text-muted">Approved:</span> @(Model.Order.ApprovedUtc?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "—")</p>
+            <p class="small mb-1"><span class="text-muted">Shipped:</span> @(Model.Order.ShippedUtc?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "—")</p>
+            @if (Model.Order.Status == OrderStatus.Shipped)
+            {
+                <form method="post" asp-page-handler="UpdateTracking" class="d-flex gap-2 align-items-center mb-1">
+                    <span class="small text-muted text-nowrap">Tracking:</span>
+                    <input name="trackingNumber" value="@Model.Order.TrackingNumber" class="form-control form-control-sm" placeholder="Royal Mail tracking no." autocomplete="off" />
+                    <button class="btn btn-outline-gold btn-sm">Save</button>
+                </form>
+                @if (WhatsAppService.TrackingUrl(Model.Order) is { } trackUrl)
+                {
+                    <p class="small mb-1"><a href="@trackUrl" target="_blank" rel="noopener">Track on Royal Mail &rarr;</a></p>
+                }
+            }
+            <p class="small mb-1"><span class="text-muted">Payment reference:</span> <strong>@Model.Order.OrderNumber</strong></p>
+            @if (!string.IsNullOrEmpty(Model.Order.ReferralCodeUsed))
+            {
+                <p class="small mb-1"><span class="text-muted">Referral code used:</span> @Model.Order.ReferralCodeUsed (-@Model.Order.DiscountAmount.ToString("C"))</p>
+            }
+            <p class="small mb-1"><span class="text-muted">Customer's discount code:</span> @(Model.Referral is null ? "generated when marked as paid" : $"{Model.Referral.Code} ({Model.Referral.DiscountPercent}% off, used {Model.Referral.TimesUsed}×)")</p>
+            <p class="small mb-0"><span class="text-muted">WhatsApp sent:</span> @(Model.Order.WhatsAppSentUtc?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "—")</p>
+        </div>
+    </div>
+</div>

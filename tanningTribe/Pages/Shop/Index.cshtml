@@ -1,0 +1,33 @@
+@page
+@model tanningTribe.Pages.Shop.IndexModel
+@{
+    ViewData["Title"] = Model.Category ?? "Shop";
+}
+
+<div class="row">
+    <aside class="col-md-3 mb-4">
+        <h2 class="h5">Categories</h2>
+        <div class="list-group">
+            <a asp-page="/Shop/Index" class="list-group-item list-group-item-action @(Model.Category is null ? "active" : "")">All Products</a>
+            @foreach (var c in Model.Categories)
+            {
+                <a asp-page="/Shop/Index" asp-route-category="@c" class="list-group-item list-group-item-action @(Model.Category == c ? "active" : "")">@c</a>
+            }
+        </div>
+    </aside>
+    <div class="col-md-9">
+        <h1 class="h3 mb-4">@(Model.Category ?? "All Products")</h1>
+        @if (Model.Products.Count == 0)
+        {
+            <p class="text-muted">No products found.</p>
+        }
+        <div class="row g-4">
+            @foreach (var p in Model.Products)
+            {
+                <div class="col-6 col-lg-4">
+                    <partial name="_ProductCard" model="p" />
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,38 @@
+@page "/shop/{slug}"
+@model tanningTribe.Pages.Shop.DetailsModel
+@{
+    ViewData["Title"] = Model.Product.Name;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-page="/Shop/Index">Shop</a></li>
+        <li class="breadcrumb-item"><a asp-page="/Shop/Index" asp-route-category="@Model.Product.Category">@Model.Product.Category</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Product.Name</li>
+    </ol>
+</nav>
+
+<div class="row g-5">
+    <div class="col-md-6">
+        <img src="@Model.Product.ImageUrl" class="img-fluid rounded-4" alt="@Model.Product.Name" />
+    </div>
+    <div class="col-md-6">
+        <span class="badge category-badge mb-2">@Model.Product.Category</span>
+        <h1>@Model.Product.Name</h1>
+        <p class="price fs-3">@Model.Product.Price.ToString("C")</p>
+        <p>@Model.Product.Description</p>
+
+        @if (Model.Product.StockQuantity > 0)
+        {
+            <form method="post" asp-page="/Cart/Index" asp-page-handler="Add" asp-route-productId="@Model.Product.Id" class="d-flex gap-2 align-items-center mt-4">
+                <input type="number" name="quantity" value="1" min="1" max="@Model.Product.StockQuantity" class="form-control" style="width: 90px" />
+                <button type="submit" class="btn btn-brand btn-lg">Add to Cart</button>
+            </form>
+            <p class="text-muted small mt-2">@Model.Product.StockQuantity in stock</p>
+        }
+        else
+        {
+            <p class="text-danger fw-semibold mt-4">Out of stock</p>
+        }
+    </div>
+</div>
