@@ -1,14 +1,16 @@
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using tanningTribe.Models;
 
 namespace tanningTribe.Data;
 
-public class StoreDbContext(DbContextOptions<StoreDbContext> options) : DbContext(options)
+public class StoreDbContext(DbContextOptions<StoreDbContext> options) : DbContext(options), IDataProtectionKeyContext
 {
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<ReferralCode> ReferralCodes => Set<ReferralCode>();
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

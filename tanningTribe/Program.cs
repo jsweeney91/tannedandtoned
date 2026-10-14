@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using tanningTribe.Data;
 using tanningTribe.Services;
@@ -44,6 +45,9 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddDataProtection()
+    .SetApplicationName("TannedAndToned")
+    .PersistKeysToDbContext<StoreDbContext>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
