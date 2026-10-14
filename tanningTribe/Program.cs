@@ -45,6 +45,10 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 10 * 1024 * 1024;
+});
 builder.Services.AddDataProtection()
     .SetApplicationName("TannedAndToned")
     .PersistKeysToDbContext<StoreDbContext>();

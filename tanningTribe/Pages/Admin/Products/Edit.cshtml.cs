@@ -25,7 +25,7 @@ public partial class EditModel(StoreDbContext db, ImageService images) : PageMod
         public string Category { get; set; } = string.Empty;
 
         [MaxLength(2000)]
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; }
 
         [Range(0.01, 100000)]
         public decimal Price { get; set; }
@@ -35,7 +35,7 @@ public partial class EditModel(StoreDbContext db, ImageService images) : PageMod
 
         public bool IsFeatured { get; set; }
 
-        public string ImageUrl { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
     }
 
     [BindProperty]
@@ -117,7 +117,7 @@ public partial class EditModel(StoreDbContext db, ImageService images) : PageMod
         }
 
         var previousImage = product.ImageUrl;
-        var newImageUrl = Input.ImageUrl;
+        var newImageUrl = Input.ImageUrl ?? string.Empty;
 
         if (ImageFile is { Length: > 0 })
         {
@@ -139,7 +139,7 @@ public partial class EditModel(StoreDbContext db, ImageService images) : PageMod
         product.Name = Input.Name.Trim();
         product.Slug = slug;
         product.Category = Input.Category.Trim();
-        product.Description = Input.Description.Trim();
+        product.Description = Input.Description?.Trim() ?? string.Empty;
         product.Price = Input.Price;
         product.StockQuantity = Input.StockQuantity;
         product.IsFeatured = Input.IsFeatured;
