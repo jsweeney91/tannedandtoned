@@ -3,6 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using tanningTribe.Data;
 using tanningTribe.Services;
 
+if (args.Length == 2 && args[0] == "hash-password")
+{
+    Console.WriteLine(PasswordHasher.Hash(args[1]));
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
