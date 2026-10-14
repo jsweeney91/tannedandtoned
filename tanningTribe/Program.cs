@@ -26,9 +26,16 @@ builder.Services.AddAuthorization();
 builder.Services.Configure<AdminSettings>(builder.Configuration.GetSection("Admin"));
 builder.Services.AddDbContext<StoreDbContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection is not configured.");
+    var connectionString = ConnectionStringResolver.Resolve(builder.Configuration)
+        ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection (or MYSQL_URL) is not configured.");
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+});
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor
+        | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDistributedMemoryCache();
@@ -49,6 +56,8 @@ builder.Services.Configure<PaymentSettings>(builder.Configuration.GetSection("Pa
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+
 var culture = new System.Globalization.CultureInfo("en-GB");
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
@@ -67,7 +76,10 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseRouting();
 
