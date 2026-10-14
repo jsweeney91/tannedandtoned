@@ -107,6 +107,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+app.UseStaticFiles(); // serves runtime uploads (product images) that aren't in the build-time asset manifest
 app.MapRazorPages()
    .WithStaticAssets();
 
