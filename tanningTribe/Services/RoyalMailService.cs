@@ -52,13 +52,15 @@ public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> optio
                     },
                     orderDate = order.CreatedUtc,
                     subtotal = order.Total,
+                    shippingCostCharged = 0m,
+                    otherCosts = 0m,
                     total = order.Total,
                     currencyCode = "GBP",
                     packages = new[]
                     {
                         new
                         {
-                            weightInGrams = weightGrams ?? _settings.DefaultWeightGrams,
+                            weightInGrams = Math.Max(weightGrams ?? _settings.DefaultWeightGrams, 50),
                             packageFormatIdentifier = _settings.PackageFormat,
                             contents = order.Items.Select(i => new
                             {
