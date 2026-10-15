@@ -30,7 +30,10 @@ public class ResendService(HttpClient http, IOptions<EmailSettings> options, ILo
 
     public bool IsConfigured => _settings.IsConfigured;
 
-    public async Task<ResendSendResult> SendAsync(string to, string subject, string textBody, string? htmlBody = null, string? inReplyToMessageId = null, IEnumerable<string>? references = null)
+    public Task<ResendSendResult> SendAsync(string to, string subject, string textBody, string? htmlBody = null, string? inReplyToMessageId = null, IEnumerable<string>? references = null) =>
+        SendAsync([to], subject, textBody, htmlBody, inReplyToMessageId, references);
+
+    public async Task<ResendSendResult> SendAsync(string[] to, string subject, string textBody, string? htmlBody = null, string? inReplyToMessageId = null, IEnumerable<string>? references = null)
     {
         if (!IsConfigured)
         {
@@ -48,7 +51,7 @@ public class ResendService(HttpClient http, IOptions<EmailSettings> options, ILo
         var payload = new
         {
             from = $"{_settings.FromName} <{_settings.FromAddress}>",
-            to = new[] { to },
+            to,
             reply_to = _settings.FromAddress,
             subject,
             text = textBody,

@@ -19,8 +19,11 @@ public class EmailSettings
     /// <summary>Send order status emails to customers automatically (received / approved / paid / shipped).</summary>
     public bool SendOrderEmails { get; set; } = true;
 
-    /// <summary>Owner's inbox. Gets a notification for every new order and every inbound customer email.</summary>
+    /// <summary>Owner inbox(es), comma or semicolon separated. Each gets a notification for every new order and inbound customer email.</summary>
     public string OwnerNotifyAddress { get; set; } = string.Empty;
+
+    public string[] OwnerNotifyAddresses =>
+        OwnerNotifyAddress.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(ApiKey) && !ApiKey.Contains("SET_IN_USER_SECRETS") && !string.IsNullOrWhiteSpace(FromAddress);
 }

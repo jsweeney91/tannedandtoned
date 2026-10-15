@@ -92,14 +92,15 @@ public class OrderEmailService(
 
     private async Task NotifyOwnerAsync(string subject, string body)
     {
-        if (!_email.IsConfigured || string.IsNullOrWhiteSpace(_email.OwnerNotifyAddress))
+        var recipients = _email.OwnerNotifyAddresses;
+        if (!_email.IsConfigured || recipients.Length == 0)
         {
             return;
         }
 
         try
         {
-            var result = await resend.SendAsync(_email.OwnerNotifyAddress, subject, body);
+            var result = await resend.SendAsync(recipients, subject, body);
             if (!result.Success)
             {
                 logger.LogWarning("Owner notification '{Subject}' failed: {Message}", subject, result.Message);
