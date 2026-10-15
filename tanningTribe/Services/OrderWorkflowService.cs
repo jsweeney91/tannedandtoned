@@ -6,7 +6,7 @@ namespace tanningTribe.Services;
 
 public record WorkflowResult(bool Success, string Message);
 
-public class OrderWorkflowService(StoreDbContext db, ReferralService referrals)
+public class OrderWorkflowService(StoreDbContext db, ReferralService referrals, OrderEmailService emails)
 {
     public async Task<WorkflowResult> ApproveAsync(int orderId)
     {
@@ -25,6 +25,7 @@ public class OrderWorkflowService(StoreDbContext db, ReferralService referrals)
         order.ApprovedUtc = DateTime.UtcNow;
         order.WhatsAppSentUtc = null;
         await db.SaveChangesAsync();
+        await emails.SendApprovedAsync(order);
         return new(true, $"Order {order.OrderNumber} approved. Now send the customer their payment details on WhatsApp.");
     }
 
@@ -38,6 +39,7 @@ public class OrderWorkflowService(StoreDbContext db, ReferralService referrals)
 
         order.Status = OrderStatus.Rejected;
         await db.SaveChangesAsync();
+        await emails.SendRejectedAsync(order);
         return new(true, $"Order {order.OrderNumber} rejected.");
     }
 
@@ -81,7 +83,8 @@ public class OrderWorkflowService(StoreDbContext db, ReferralService referrals)
 
         await db.SaveChangesAsync();
         await referrals.RecordUseAsync(order.ReferralCodeUsed);
-        await referrals.GetOrCreateForOrderAsync(order);
+        var referral = await referrals.GetOrCreateForOrderAsync(order);
+        await emails.SendPaidAsync(order, referral);
 
         return new(true, $"Order {order.OrderNumber} marked as paid and stock updated. Send the customer their referral code on WhatsApp.");
     }
@@ -104,6 +107,7 @@ public class OrderWorkflowService(StoreDbContext db, ReferralService referrals)
         order.TrackingNumber = NormalizeTracking(trackingNumber);
         order.WhatsAppSentUtc = null;
         await db.SaveChangesAsync();
+        await emails.SendShippedAsync(order);
         return new(true, $"Order {order.OrderNumber} marked as shipped. Let the customer know on WhatsApp.");
     }
 

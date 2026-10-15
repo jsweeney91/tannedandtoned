@@ -13,5 +13,11 @@ public class EmailSettings
     /// <summary>Address on your verified Resend domain, e.g. "hello@yourdomain.com". Also used as Reply-To so replies come back via the webhook.</summary>
     public string FromAddress { get; set; } = string.Empty;
 
+    /// <summary>Public https origin of the site, e.g. "https://tannedandtoned.co.uk". Used to make product image URLs absolute in emails.</summary>
+    public string PublicBaseUrl { get; set; } = string.Empty;
+
+    /// <summary>Send order status emails to customers automatically (received / approved / paid / shipped).</summary>
+    public bool SendOrderEmails { get; set; } = true;
+
     public bool IsConfigured => !string.IsNullOrWhiteSpace(ApiKey) && !ApiKey.Contains("SET_IN_USER_SECRETS") && !string.IsNullOrWhiteSpace(FromAddress);
 }

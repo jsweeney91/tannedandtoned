@@ -27,7 +27,7 @@ public class ResendService(HttpClient http, IOptions<EmailSettings> options, ILo
 
     public bool IsConfigured => _settings.IsConfigured;
 
-    public async Task<ResendSendResult> SendAsync(string to, string subject, string textBody, string? inReplyToMessageId = null, IEnumerable<string>? references = null)
+    public async Task<ResendSendResult> SendAsync(string to, string subject, string textBody, string? htmlBody = null, string? inReplyToMessageId = null, IEnumerable<string>? references = null)
     {
         if (!IsConfigured)
         {
@@ -49,6 +49,7 @@ public class ResendService(HttpClient http, IOptions<EmailSettings> options, ILo
             reply_to = _settings.FromAddress,
             subject,
             text = textBody,
+            html = string.IsNullOrWhiteSpace(htmlBody) ? null : htmlBody,
             headers = headers.Count > 0 ? headers : null
         };
 

@@ -75,7 +75,7 @@ public partial class ConversationService(StoreDbContext db, ResendService resend
         var subject = conversation.Subject.StartsWith("Re:", StringComparison.OrdinalIgnoreCase) ? conversation.Subject : $"Re: {conversation.Subject}";
         var references = conversation.Messages.Where(m => m.MessageId is not null).OrderBy(m => m.SentUtc).Select(m => m.MessageId!);
 
-        var result = await resend.SendAsync(conversation.CustomerEmail, subject, body.Trim(), last?.MessageId, references);
+        var result = await resend.SendAsync(conversation.CustomerEmail, subject, body.Trim(), null, last?.MessageId, references);
         if (!result.Success)
         {
             return new(false, result.Message);

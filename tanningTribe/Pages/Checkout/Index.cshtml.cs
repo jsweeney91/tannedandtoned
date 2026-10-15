@@ -7,7 +7,7 @@ using tanningTribe.Services;
 
 namespace tanningTribe.Pages.Checkout;
 
-public class IndexModel(StoreDbContext db, CartService cart, ReferralService referrals, WhatsAppService whatsApp, OrderNumberService orderNumbers) : PageModel
+public class IndexModel(StoreDbContext db, CartService cart, ReferralService referrals, WhatsAppService whatsApp, OrderNumberService orderNumbers, OrderEmailService emails) : PageModel
 {
     public class InputModel
     {
@@ -97,6 +97,7 @@ public class IndexModel(StoreDbContext db, CartService cart, ReferralService ref
 
         db.Orders.Add(order);
         await db.SaveChangesAsync();
+        await emails.SendReceivedAsync(order);
 
         cart.Clear();
         ConfirmationModel.RememberOrder(HttpContext.Session, order.Id);

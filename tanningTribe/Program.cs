@@ -72,6 +72,7 @@ builder.Services.AddHttpClient<RoyalMailService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));
 builder.Services.AddHttpClient<ResendService>();
 builder.Services.AddScoped<ConversationService>();
+builder.Services.AddScoped<OrderEmailService>();
 
 var app = builder.Build();
 
