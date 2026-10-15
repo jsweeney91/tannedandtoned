@@ -10,6 +10,8 @@ public class StoreDbContext(DbContextOptions<StoreDbContext> options) : DbContex
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<ReferralCode> ReferralCodes => Set<ReferralCode>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -22,5 +24,12 @@ public class StoreDbContext(DbContextOptions<StoreDbContext> options) : DbContex
         modelBuilder.Entity<ReferralCode>().HasIndex(r => r.Code).IsUnique();
         modelBuilder.Entity<ReferralCode>().HasIndex(r => r.OwnerOrderId).IsUnique();
         modelBuilder.Entity<Order>().HasIndex(o => o.OrderNumber).IsUnique();
+        modelBuilder.Entity<Conversation>().HasIndex(c => c.CustomerEmail);
+        modelBuilder.Entity<Conversation>().HasIndex(c => c.LastMessageUtc);
+        modelBuilder.Entity<Conversation>().HasOne(c => c.Order).WithMany().HasForeignKey(c => c.OrderId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<EmailMessage>().HasIndex(m => m.MessageId);
+        modelBuilder.Entity<EmailMessage>().HasIndex(m => m.ResendEmailId);
+        modelBuilder.Entity<EmailMessage>().Property(m => m.TextBody).HasColumnType("longtext");
+        modelBuilder.Entity<EmailMessage>().Property(m => m.HtmlBody).HasColumnType("longtext");
     }
 }

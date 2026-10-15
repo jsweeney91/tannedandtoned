@@ -46,6 +46,10 @@ public class Order
     [MaxLength(40)]
     public string? TrackingNumber { get; set; }
 
+    /// <summary>Click &amp; Drop order identifier, used to re-download the postage label.</summary>
+    [MaxLength(40)]
+    public string? RoyalMailOrderId { get; set; }
+
     [MaxLength(100)]
     public string? WhatsAppMessageSid { get; set; }
 

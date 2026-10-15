@@ -1,0 +1,76 @@
+@page "{id:int}"
+@model tanningTribe.Pages.Admin.Messages.ThreadModel
+@{
+    ViewData["Title"] = Model.Conversation.Subject;
+}
+
+<a asp-page="/Admin/Messages/Index" class="link-gold small">&larr; Back to messages</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-2 mb-4">
+    <div>
+        <h1 class="h3 mb-0">@Model.Conversation.Subject</h1>
+        <small class="text-muted">@(Model.Conversation.CustomerName ?? Model.Conversation.CustomerEmail) &middot; <a href="mailto:@Model.Conversation.CustomerEmail">@Model.Conversation.CustomerEmail</a></small>
+    </div>
+    <form method="post" asp-page-handler="LinkOrder" class="d-flex gap-2 align-items-center">
+        <span class="small text-muted text-nowrap">Order:</span>
+        @if (Model.Conversation.Order is not null)
+        {
+            <a asp-page="/Admin/Orders/Details" asp-route-id="@Model.Conversation.Order.Id" class="btn btn-outline-gold btn-sm">@Model.Conversation.Order.OrderNumber <partial name="_OrderStatusBadge" model="Model.Conversation.Order.Status" /></a>
+        }
+        <input name="orderNumber" value="@Model.Conversation.Order?.OrderNumber" class="form-control form-control-sm" style="width: 130px" placeholder="TT-XXXXXX" autocomplete="off" />
+        <button class="btn btn-outline-gold btn-sm">Link</button>
+    </form>
+</div>
+
+@if (TempData["Message"] is string msg)
+{
+    <div class="alert alert-success py-2">@msg</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger py-2">@err</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        @foreach (var m in Model.Conversation.Messages)
+        {
+            var outbound = m.Direction == MessageDirection.Outbound;
+            <div class="bg-white rounded-4 p-3 mb-3 @(outbound ? "ms-lg-5 border-start border-4 border-warning" : "me-lg-5")">
+                <div class="d-flex justify-content-between small text-muted mb-2">
+                    <span>@(outbound ? "You" : (Model.Conversation.CustomerName ?? m.FromAddress)) &rarr; @m.ToAddress</span>
+                    <span>@m.SentUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
+                </div>
+                <pre class="wa-preview mb-0">@(m.TextBody ?? StripHtml(m.HtmlBody))</pre>
+            </div>
+        }
+
+        <div class="bg-white rounded-4 p-3">
+            <h2 class="h6">Reply</h2>
+            @if (!Model.EmailConfigured)
+            {
+                <p class="small text-muted mb-0">Email sending is not configured. Set <code>Email:ApiKey</code> and <code>Email:FromAddress</code>.</p>
+            }
+            else
+            {
+                <form method="post">
+                    <textarea asp-for="Reply" class="form-control mb-2" rows="6" placeholder="Type your reply…"></textarea>
+                    <button class="btn btn-brand btn-sm">Send reply</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    private static string StripHtml(string? html)
+    {
+        if (string.IsNullOrEmpty(html))
+        {
+            return string.Empty;
+        }
+
+        var text = System.Text.RegularExpressions.Regex.Replace(html, "<br\\s*/?>|</p>|</div>", "\n", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        text = System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", string.Empty);
+        return System.Net.WebUtility.HtmlDecode(text).Trim();
+    }
+}

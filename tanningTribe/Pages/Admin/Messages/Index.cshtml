@@ -1,0 +1,49 @@
+@page
+@model tanningTribe.Pages.Admin.Messages.IndexModel
+@{
+    ViewData["Title"] = "Messages";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Messages</h1>
+</div>
+
+@if (Model.Conversations.Count == 0)
+{
+    <div class="bg-white rounded-4 p-4 text-muted">No emails received yet. Replies to <code>@ViewData["FromAddress"]</code> will appear here.</div>
+}
+else
+{
+    <div class="bg-white rounded-4 p-3">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Customer</th><th>Subject</th><th>Order</th><th>Last message</th></tr></thead>
+            <tbody>
+                @foreach (var c in Model.Conversations)
+                {
+                    <tr class="@(c.UnreadCount > 0 ? "fw-semibold" : "")">
+                        <td>
+                            <a asp-page="/Admin/Messages/Thread" asp-route-id="@c.Id" class="link-gold">@(c.CustomerName ?? c.CustomerEmail)</a>
+                            @if (c.UnreadCount > 0)
+                            {
+                                <span class="badge bg-danger ms-1">@c.UnreadCount</span>
+                            }
+                            <div class="small text-muted fw-normal">@c.CustomerEmail</div>
+                        </td>
+                        <td>@c.Subject</td>
+                        <td>
+                            @if (c.Order is not null)
+                            {
+                                <a asp-page="/Admin/Orders/Details" asp-route-id="@c.Order.Id" class="link-gold">@c.Order.OrderNumber</a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td class="small text-muted">@c.LastMessageUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

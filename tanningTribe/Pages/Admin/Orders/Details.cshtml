@@ -111,6 +111,64 @@
                 <p class="small mb-0"><span class="text-muted">Notes:</span> @Model.Order.CustomerNotes</p>
             }
         </div>
+        <div class="bg-white rounded-4 p-3 mb-3">
+            <h2 class="h6">Email conversations</h2>
+            @if (Model.Conversations.Count == 0)
+            {
+                <p class="small text-muted mb-0">No emails linked to this order yet.</p>
+            }
+            else
+            {
+                @foreach (var c in Model.Conversations)
+                {
+                    <p class="small mb-1">
+                        <a asp-page="/Admin/Messages/Thread" asp-route-id="@c.Id" class="link-gold">@c.Subject</a>
+                        @if (c.UnreadCount > 0)
+                        {
+                            <span class="badge bg-danger ms-1">@c.UnreadCount</span>
+                        }
+                        <span class="text-muted"> &middot; @c.LastMessageUtc.ToLocalTime().ToString("dd MMM HH:mm")</span>
+                    </p>
+                }
+            }
+        </div>
+        <div class="bg-white rounded-4 p-3 mb-3">
+            <h2 class="h6">Royal Mail label</h2>
+            @if (!Model.RoyalMailConfigured)
+            {
+                <p class="small text-muted mb-0">Not configured. Set <code>RoyalMail:ApiKey</code> to create Click &amp; Drop orders from here.</p>
+            }
+            else if (Model.Order.RoyalMailOrderId is null)
+            {
+                @if (Model.Order.Status is OrderStatus.Paid or OrderStatus.Shipped)
+                {
+                    <form method="post" asp-page-handler="CreateLabel" class="d-flex flex-wrap gap-2 align-items-center">
+                        <input name="weightGrams" type="number" min="1" class="form-control form-control-sm" style="width: 110px" placeholder="Weight (g)" />
+                        <select name="serviceCode" class="form-select form-select-sm" style="width: 170px">
+                            <option value="">Default service</option>
+                            <option value="TPS48">Tracked 48</option>
+                            <option value="TPN24">Tracked 24</option>
+                            <option value="CRL1">1st Class</option>
+                            <option value="CRL2">2nd Class</option>
+                        </select>
+                        <button class="btn btn-brand btn-sm text-nowrap">Create Royal Mail order</button>
+                    </form>
+                    <p class="small text-muted mt-2 mb-0">Creates the order in Click &amp; Drop. Pay for postage there, then download the label here.</p>
+                }
+                else
+                {
+                    <p class="small text-muted mb-0">Available once the order is marked as paid.</p>
+                }
+            }
+            else
+            {
+                <p class="small mb-2"><span class="text-muted">Click &amp; Drop order:</span> <strong>@Model.Order.RoyalMailOrderId</strong></p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-brand btn-sm" asp-page-handler="Label" asp-route-id="@Model.Order.Id" target="_blank">Download label (PDF)</a>
+                    <a class="btn btn-outline-gold btn-sm" href="https://business.parcel.royalmail.com/orders/" target="_blank" rel="noopener">Open Click &amp; Drop</a>
+                </div>
+            }
+        </div>
         <div class="bg-white rounded-4 p-3">
             <h2 class="h6">Timeline</h2>
             <p class="small mb-1"><span class="text-muted">Placed:</span> @Model.Order.CreatedUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</p>
