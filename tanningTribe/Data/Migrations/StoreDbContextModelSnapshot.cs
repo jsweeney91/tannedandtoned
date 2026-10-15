@@ -86,6 +86,48 @@ namespace tanningTribe.Data.Migrations
                     b.ToTable("Conversations");
                 });
 
+            modelBuilder.Entity("tanningTribe.Models.EmailAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentId")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)");
+
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("longblob");
+
+                    b.Property<int>("EmailMessageId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<bool>("IsInline")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmailMessageId");
+
+                    b.ToTable("EmailAttachments");
+                });
+
             modelBuilder.Entity("tanningTribe.Models.EmailMessage", b =>
                 {
                     b.Property<int>("Id")
@@ -375,6 +417,17 @@ namespace tanningTribe.Data.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("tanningTribe.Models.EmailAttachment", b =>
+                {
+                    b.HasOne("tanningTribe.Models.EmailMessage", "EmailMessage")
+                        .WithMany("Attachments")
+                        .HasForeignKey("EmailMessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EmailMessage");
+                });
+
             modelBuilder.Entity("tanningTribe.Models.EmailMessage", b =>
                 {
                     b.HasOne("tanningTribe.Models.Conversation", "Conversation")
@@ -419,6 +472,11 @@ namespace tanningTribe.Data.Migrations
             modelBuilder.Entity("tanningTribe.Models.Conversation", b =>
                 {
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("tanningTribe.Models.EmailMessage", b =>
+                {
+                    b.Navigation("Attachments");
                 });
 
             modelBuilder.Entity("tanningTribe.Models.Order", b =>

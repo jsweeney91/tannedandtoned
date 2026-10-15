@@ -10,6 +10,8 @@ namespace tanningTribe.Services;
 /// <summary>Stores inbound/outbound emails and groups them into threaded conversations.</summary>
 public partial class ConversationService(StoreDbContext db, ResendService resend, IOptions<EmailSettings> emailOptions, ILogger<ConversationService> logger)
 {
+    private const long MaxAttachmentBytes = 10 * 1024 * 1024;
+
     public async Task<Conversation?> RecordInboundAsync(ResendInboundEmail email)
     {
         if (!string.IsNullOrEmpty(email.EmailId) && await db.EmailMessages.AnyAsync(m => m.ResendEmailId == email.EmailId))
@@ -37,7 +39,7 @@ public partial class ConversationService(StoreDbContext db, ResendService resend
             conversation.CustomerName = fromName;
         }
 
-        conversation.Messages.Add(new EmailMessage
+        var message = new EmailMessage
         {
             Direction = MessageDirection.Inbound,
             FromAddress = fromAddress,
@@ -49,7 +51,37 @@ public partial class ConversationService(StoreDbContext db, ResendService resend
             InReplyTo = email.InReplyTo,
             ResendEmailId = email.EmailId,
             SentUtc = email.ReceivedUtc
-        });
+        };
+
+        foreach (var info in email.Attachments)
+        {
+            if (info.Size > MaxAttachmentBytes)
+            {
+                logger.LogWarning("Skipping attachment {Name} ({Size} bytes) - too large", info.FileName, info.Size);
+                continue;
+            }
+
+            var bytes = await resend.DownloadAttachmentAsync(email.EmailId, info);
+            if (bytes is null)
+            {
+                continue;
+            }
+
+            var isInline = !string.IsNullOrEmpty(info.ContentId)
+                && (email.Html?.Contains($"cid:{info.ContentId}", StringComparison.OrdinalIgnoreCase) ?? false);
+
+            message.Attachments.Add(new EmailAttachment
+            {
+                FileName = info.FileName,
+                ContentType = info.ContentType,
+                ContentId = info.ContentId,
+                IsInline = isInline,
+                Size = bytes.LongLength,
+                Data = bytes
+            });
+        }
+
+        conversation.Messages.Add(message);
         conversation.LastMessageUtc = email.ReceivedUtc;
         conversation.UnreadCount++;
 

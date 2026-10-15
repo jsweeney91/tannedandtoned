@@ -141,9 +141,9 @@ app.MapPost("/webhooks/resend", async (HttpRequest request, ResendService resend
     }
 
     var inbound = ResendService.ParseInbound(data);
-    if (string.IsNullOrEmpty(inbound.Text) && string.IsNullOrEmpty(inbound.Html) && !string.IsNullOrEmpty(inbound.EmailId))
+    if (!string.IsNullOrEmpty(inbound.EmailId))
     {
-        // the webhook payload only carries metadata; fetch the body
+        // the webhook payload only carries metadata; fetch the full email (body + attachments)
         inbound = await resend.GetReceivedAsync(inbound.EmailId) ?? inbound;
     }
 

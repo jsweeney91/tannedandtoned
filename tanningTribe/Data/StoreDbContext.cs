@@ -12,6 +12,7 @@ public class StoreDbContext(DbContextOptions<StoreDbContext> options) : DbContex
     public DbSet<ReferralCode> ReferralCodes => Set<ReferralCode>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
+    public DbSet<EmailAttachment> EmailAttachments => Set<EmailAttachment>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -31,5 +32,6 @@ public class StoreDbContext(DbContextOptions<StoreDbContext> options) : DbContex
         modelBuilder.Entity<EmailMessage>().HasIndex(m => m.ResendEmailId);
         modelBuilder.Entity<EmailMessage>().Property(m => m.TextBody).HasColumnType("longtext");
         modelBuilder.Entity<EmailMessage>().Property(m => m.HtmlBody).HasColumnType("longtext");
+        modelBuilder.Entity<EmailAttachment>().Property(a => a.Data).HasColumnType("longblob");
     }
 }

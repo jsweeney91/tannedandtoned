@@ -54,6 +54,8 @@ public class EmailMessage
 
     public string? HtmlBody { get; set; }
 
+    public List<EmailAttachment> Attachments { get; set; } = [];
+
     /// <summary>RFC 5322 Message-ID header, used to thread replies.</summary>
     [MaxLength(300)]
     public string? MessageId { get; set; }
@@ -66,4 +68,28 @@ public class EmailMessage
     public string? ResendEmailId { get; set; }
 
     public DateTime SentUtc { get; set; } = DateTime.UtcNow;
+}
+
+public class EmailAttachment
+{
+    public int Id { get; set; }
+
+    public int EmailMessageId { get; set; }
+    public EmailMessage? EmailMessage { get; set; }
+
+    [MaxLength(255)]
+    public string FileName { get; set; } = string.Empty;
+
+    [MaxLength(120)]
+    public string ContentType { get; set; } = "application/octet-stream";
+
+    /// <summary>Content-ID header (without angle brackets) for inline images referenced as cid: in the HTML body.</summary>
+    [MaxLength(300)]
+    public string? ContentId { get; set; }
+
+    public bool IsInline { get; set; }
+
+    public long Size { get; set; }
+
+    public byte[] Data { get; set; } = [];
 }

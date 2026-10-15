@@ -9,6 +9,8 @@ namespace tanningTribe.Services;
 
 public record ResendSendResult(bool Success, string Message, string? EmailId = null);
 
+public record ResendAttachmentInfo(string Id, string FileName, string ContentType, string? ContentId, long Size, string? DownloadUrl);
+
 public record ResendInboundEmail(
     string EmailId,
     string From,
@@ -18,7 +20,8 @@ public record ResendInboundEmail(
     string? Html,
     string? MessageId,
     string? InReplyTo,
-    DateTime ReceivedUtc);
+    DateTime ReceivedUtc,
+    IReadOnlyList<ResendAttachmentInfo> Attachments);
 
 /// <summary>Thin client for the Resend HTTP API (send + fetch received emails) and Svix webhook verification.</summary>
 public class ResendService(HttpClient http, IOptions<EmailSettings> options, ILogger<ResendService> logger)
@@ -146,6 +149,30 @@ public class ResendService(HttpClient http, IOptions<EmailSettings> options, ILo
         }
 
         var created = Str("created_at");
+        var attachments = new List<ResendAttachmentInfo>();
+        if (data.TryGetProperty("attachments", out var atts) && atts.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var a in atts.EnumerateArray())
+            {
+                string? AStr(string name) => a.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.String ? p.GetString() : null;
+                long ASize() => a.TryGetProperty("size", out var p) && p.ValueKind == JsonValueKind.Number ? p.GetInt64() : 0;
+
+                var id = AStr("id");
+                if (string.IsNullOrEmpty(id))
+                {
+                    continue;
+                }
+
+                attachments.Add(new ResendAttachmentInfo(
+                    id,
+                    AStr("filename") ?? AStr("name") ?? "attachment",
+                    AStr("content_type") ?? AStr("contentType") ?? "application/octet-stream",
+                    AStr("content_id")?.Trim('<', '>'),
+                    ASize(),
+                    AStr("download_url") ?? AStr("url")));
+            }
+        }
+
         return new ResendInboundEmail(
             EmailId: Str("email_id") ?? Str("id") ?? fallbackId ?? string.Empty,
             From: FirstOf("from"),
@@ -155,7 +182,54 @@ public class ResendService(HttpClient http, IOptions<EmailSettings> options, ILo
             Html: Str("html"),
             MessageId: Str("message_id") ?? Header("Message-ID") ?? Header("Message-Id"),
             InReplyTo: Str("in_reply_to") ?? Header("In-Reply-To"),
-            ReceivedUtc: DateTime.TryParse(created, null, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var dt) ? dt : DateTime.UtcNow);
+            ReceivedUtc: DateTime.TryParse(created, null, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var dt) ? dt : DateTime.UtcNow,
+            Attachments: attachments);
+    }
+
+    /// <summary>Downloads a received attachment's bytes. Uses the pre-signed download_url when present, otherwise the attachments endpoint.</summary>
+    public async Task<byte[]?> DownloadAttachmentAsync(string emailId, ResendAttachmentInfo attachment)
+    {
+        try
+        {
+            var url = attachment.DownloadUrl;
+            if (string.IsNullOrEmpty(url))
+            {
+                using var meta = BuildRequest(HttpMethod.Get, $"emails/receiving/{Uri.EscapeDataString(emailId)}/attachments/{Uri.EscapeDataString(attachment.Id)}");
+                using var metaResponse = await http.SendAsync(meta);
+                if (!metaResponse.IsSuccessStatusCode)
+                {
+                    logger.LogWarning("Resend attachment lookup failed ({Status}): {Body}", (int)metaResponse.StatusCode, await metaResponse.Content.ReadAsStringAsync());
+                    return null;
+                }
+
+                var contentType = metaResponse.Content.Headers.ContentType?.MediaType;
+                if (contentType is not null && !contentType.Contains("json", StringComparison.OrdinalIgnoreCase))
+                {
+                    return await metaResponse.Content.ReadAsByteArrayAsync();
+                }
+
+                using var json = JsonDocument.Parse(await metaResponse.Content.ReadAsStringAsync());
+                url = json.RootElement.TryGetProperty("download_url", out var d) ? d.GetString() : null;
+                if (string.IsNullOrEmpty(url))
+                {
+                    return null;
+                }
+            }
+
+            using var response = await http.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogWarning("Resend attachment download failed ({Status})", (int)response.StatusCode);
+                return null;
+            }
+
+            return await response.Content.ReadAsByteArrayAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Resend attachment download threw");
+            return null;
+        }
     }
 
     /// <summary>Verifies a Svix-signed webhook (Resend uses Svix). Returns false if the secret is missing.</summary>

@@ -42,7 +42,7 @@
                 </div>
                 @if (!string.IsNullOrWhiteSpace(m.HtmlBody))
                 {
-                    <iframe class="email-frame w-100 border-0" sandbox="allow-same-origin allow-popups" referrerpolicy="no-referrer" srcdoc="@m.HtmlBody" onload="this.style.height=(this.contentDocument.documentElement.scrollHeight+16)+'px'"></iframe>
+                    <iframe class="email-frame w-100 border-0" sandbox="allow-same-origin allow-popups" referrerpolicy="no-referrer" srcdoc="@Model.RenderHtml(m)" onload="this.style.height=(this.contentDocument.documentElement.scrollHeight+16)+'px'"></iframe>
                     @if (!string.IsNullOrWhiteSpace(m.TextBody))
                     {
                         <details class="mt-2"><summary class="small text-muted">Plain text</summary><pre class="wa-preview mb-0 mt-2">@m.TextBody</pre></details>
@@ -51,6 +51,31 @@
                 else
                 {
                     <pre class="wa-preview mb-0">@m.TextBody</pre>
+                }
+                @if (Model.Attachments.TryGetValue(m.Id, out var atts) && atts.Count > 0)
+                {
+                    var images = atts.Where(a => a.ContentType.StartsWith("image/") && !a.IsInline).ToList();
+                    var files = atts.Where(a => !a.ContentType.StartsWith("image/")).ToList();
+                    @if (images.Count > 0)
+                    {
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            @foreach (var a in images)
+                            {
+                                <a asp-page-handler="Attachment" asp-route-id="@Model.Conversation.Id" asp-route-attachmentId="@a.Id" target="_blank" title="@a.FileName">
+                                    <img src="@Url.Page("/Admin/Messages/Thread", "Attachment", new { id = Model.Conversation.Id, attachmentId = a.Id })" alt="@a.FileName" style="width:140px;height:140px;object-fit:cover;border-radius:10px;" />
+                                </a>
+                            }
+                        </div>
+                    }
+                    @if (files.Count > 0)
+                    {
+                        <ul class="list-unstyled small mt-3 mb-0">
+                            @foreach (var a in files)
+                            {
+                                <li>📎 <a asp-page-handler="Attachment" asp-route-id="@Model.Conversation.Id" asp-route-attachmentId="@a.Id" asp-route-download="true" class="link-gold">@a.FileName</a> <span class="text-muted">(@((a.Size / 1024.0).ToString("0.#")) KB)</span></li>
+                            }
+                        </ul>
+                    }
                 }
             </div>
         }
