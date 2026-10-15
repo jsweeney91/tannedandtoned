@@ -33,6 +33,84 @@ public class OrderEmailService(
     public Task SendRejectedAsync(Order order) =>
         SendAsync(order, $"Order {order.OrderNumber} – update", messages.BuildRejectedMessage(order), showItems: false);
 
+    /// <summary>Notifies the owner that a new order has been placed.</summary>
+    public async Task NotifyOwnerNewOrderAsync(Order order)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"New order {order.OrderNumber} from {order.CustomerName}.");
+        sb.AppendLine();
+        foreach (var item in order.Items)
+        {
+            sb.AppendLine($"• {item.ProductName} × {item.Quantity} – {(item.UnitPrice * item.Quantity):C}");
+        }
+        if (order.DiscountAmount > 0)
+        {
+            sb.AppendLine($"• Referral discount ({order.ReferralCodeUsed}) – -{order.DiscountAmount:C}");
+        }
+        sb.AppendLine($"Total: {order.Total:C}");
+        sb.AppendLine();
+        sb.AppendLine($"Email: {order.CustomerEmail}");
+        sb.AppendLine($"WhatsApp: {order.WhatsAppNumber}");
+        sb.AppendLine($"Address: {order.ShippingAddress.Replace("\r", "").Replace("\n", ", ")}");
+        if (!string.IsNullOrWhiteSpace(order.CustomerNotes))
+        {
+            sb.AppendLine($"Notes: {order.CustomerNotes}");
+        }
+        sb.AppendLine();
+        sb.AppendLine($"Review it: {ResolveBaseUrl()}/Admin/Orders/Details/{order.Id}");
+
+        await NotifyOwnerAsync($"🛍️ New order {order.OrderNumber} – {order.CustomerName} ({order.Total:C})", sb.ToString());
+    }
+
+    /// <summary>Notifies the owner that a customer email has arrived.</summary>
+    public async Task NotifyOwnerNewMessageAsync(Conversation conversation, EmailMessage message)
+    {
+        var preview = (message.TextBody ?? string.Empty).Trim();
+        if (preview.Length > 1500)
+        {
+            preview = preview[..1500] + "…";
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"From: {conversation.CustomerName ?? message.FromAddress} <{message.FromAddress}>");
+        sb.AppendLine($"Subject: {message.Subject}");
+        if (conversation.Order is not null)
+        {
+            sb.AppendLine($"Order: {conversation.Order.OrderNumber}");
+        }
+        if (message.Attachments.Count > 0)
+        {
+            sb.AppendLine($"Attachments: {string.Join(", ", message.Attachments.Select(a => a.FileName))}");
+        }
+        sb.AppendLine();
+        sb.AppendLine(preview);
+        sb.AppendLine();
+        sb.AppendLine($"Reply here: {ResolveBaseUrl()}/Admin/Messages/Thread/{conversation.Id}");
+
+        await NotifyOwnerAsync($"✉️ New message from {conversation.CustomerName ?? message.FromAddress}: {message.Subject}", sb.ToString());
+    }
+
+    private async Task NotifyOwnerAsync(string subject, string body)
+    {
+        if (!_email.IsConfigured || string.IsNullOrWhiteSpace(_email.OwnerNotifyAddress))
+        {
+            return;
+        }
+
+        try
+        {
+            var result = await resend.SendAsync(_email.OwnerNotifyAddress, subject, body);
+            if (!result.Success)
+            {
+                logger.LogWarning("Owner notification '{Subject}' failed: {Message}", subject, result.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Owner notification '{Subject}' threw", subject);
+        }
+    }
+
     private async Task SendAsync(Order order, string subject, string textBody, bool showItems)
     {
         if (!_email.IsConfigured || !_email.SendOrderEmails || string.IsNullOrWhiteSpace(order.CustomerEmail))

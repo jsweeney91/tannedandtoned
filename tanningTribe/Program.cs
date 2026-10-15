@@ -122,7 +122,7 @@ app.UseStaticFiles(); // serves runtime uploads (product images) that aren't in 
 app.MapRazorPages()
    .WithStaticAssets();
 
-app.MapPost("/webhooks/resend", async (HttpRequest request, ResendService resend, ConversationService conversations, ILogger<Program> logger) =>
+app.MapPost("/webhooks/resend", async (HttpRequest request, ResendService resend, ConversationService conversations, OrderEmailService emails, ILogger<Program> logger) =>
 {
     using var reader = new StreamReader(request.Body);
     var payload = await reader.ReadToEndAsync();
@@ -147,7 +147,11 @@ app.MapPost("/webhooks/resend", async (HttpRequest request, ResendService resend
         inbound = await resend.GetReceivedAsync(inbound.EmailId) ?? inbound;
     }
 
-    await conversations.RecordInboundAsync(inbound);
+    var stored = await conversations.RecordInboundAsync(inbound);
+    if (stored is { } s)
+    {
+        await emails.NotifyOwnerNewMessageAsync(s.Conversation, s.Message);
+    }
     return Results.Ok();
 }).AllowAnonymous();
 

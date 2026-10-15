@@ -98,6 +98,7 @@ public class IndexModel(StoreDbContext db, CartService cart, ReferralService ref
         db.Orders.Add(order);
         await db.SaveChangesAsync();
         await emails.SendReceivedAsync(order);
+        await emails.NotifyOwnerNewOrderAsync(order);
 
         cart.Clear();
         ConfirmationModel.RememberOrder(HttpContext.Session, order.Id);

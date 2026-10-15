@@ -12,7 +12,7 @@ public partial class ConversationService(StoreDbContext db, ResendService resend
 {
     private const long MaxAttachmentBytes = 10 * 1024 * 1024;
 
-    public async Task<Conversation?> RecordInboundAsync(ResendInboundEmail email)
+    public async Task<(Conversation Conversation, EmailMessage Message)?> RecordInboundAsync(ResendInboundEmail email)
     {
         if (!string.IsNullOrEmpty(email.EmailId) && await db.EmailMessages.AnyAsync(m => m.ResendEmailId == email.EmailId))
         {
@@ -87,7 +87,11 @@ public partial class ConversationService(StoreDbContext db, ResendService resend
 
         await db.SaveChangesAsync();
         logger.LogInformation("Inbound email from {From} stored in conversation {Id}", fromAddress, conversation.Id);
-        return conversation;
+        if (conversation.OrderId is not null && conversation.Order is null)
+        {
+            conversation.Order = await db.Orders.FindAsync(conversation.OrderId);
+        }
+        return (conversation, message);
     }
 
     public async Task<WorkflowResult> ReplyAsync(int conversationId, string body)
