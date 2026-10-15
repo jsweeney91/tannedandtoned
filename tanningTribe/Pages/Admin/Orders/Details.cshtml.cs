@@ -16,6 +16,7 @@ public class DetailsModel(StoreDbContext db, WhatsAppService whatsApp, OrderWork
     public string WhatsAppLink { get; set; } = "";
     public bool RoyalMailConfigured => royalMail.IsConfigured;
     public List<Conversation> Conversations { get; set; } = [];
+    public List<RoyalMailServiceOption> RoyalMailServices { get; set; } = [];
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -28,6 +29,10 @@ public class DetailsModel(StoreDbContext db, WhatsAppService whatsApp, OrderWork
         Order = order;
         Referral = await db.ReferralCodes.FirstOrDefaultAsync(r => r.OwnerOrderId == order.Id);
         Conversations = await db.Conversations.Where(c => c.OrderId == order.Id).OrderByDescending(c => c.LastMessageUtc).ToListAsync();
+        if (royalMail.IsConfigured && order.RoyalMailOrderId is null && order.Status is OrderStatus.Paid or OrderStatus.Shipped)
+        {
+            RoyalMailServices = await royalMail.GetServicesAsync();
+        }
         (MessageTitle, MessagePreview) = order.Status switch
         {
             OrderStatus.PendingApproval => ("Order received (no payment details)", whatsApp.BuildReceivedMessage(order)),

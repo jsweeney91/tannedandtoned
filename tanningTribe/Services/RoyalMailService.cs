@@ -8,6 +8,8 @@ namespace tanningTribe.Services;
 
 public record RoyalMailOrderResult(bool Success, string Message, string? OrderIdentifier = null, string? TrackingNumber = null);
 
+public record RoyalMailServiceOption(string Code, string Name, string Carrier);
+
 /// <summary>Creates Royal Mail Click &amp; Drop orders and downloads postage labels.</summary>
 public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> options, ILogger<RoyalMailService> logger)
 {
@@ -118,6 +120,54 @@ public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> optio
             logger.LogError(ex, "Click & Drop create order threw");
             return new(false, $"Could not reach Royal Mail: {ex.Message}");
         }
+    }
+
+    /// <summary>Lists the shipping services (and their codes) enabled on this Click &amp; Drop account.</summary>
+    public async Task<List<RoyalMailServiceOption>> GetServicesAsync()
+    {
+        var result = new List<RoyalMailServiceOption>();
+        if (!IsConfigured)
+        {
+            return result;
+        }
+
+        try
+        {
+            using var request = BuildRequest(HttpMethod.Get, "services");
+            using var response = await http.SendAsync(request);
+            var body = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                logger.LogWarning("Click & Drop services lookup failed ({Status}): {Body}", (int)response.StatusCode, body);
+                return result;
+            }
+
+            using var json = JsonDocument.Parse(body);
+            foreach (var carrier in json.RootElement.EnumerateArray())
+            {
+                var carrierName = carrier.TryGetProperty("carrierName", out var cn) ? cn.GetString() ?? "" : "";
+                if (!carrier.TryGetProperty("services", out var services) || services.ValueKind != JsonValueKind.Array)
+                {
+                    continue;
+                }
+
+                foreach (var s in services.EnumerateArray())
+                {
+                    var code = s.TryGetProperty("serviceCode", out var c) ? c.GetString() : null;
+                    var name = s.TryGetProperty("serviceName", out var n) ? n.GetString() : null;
+                    if (!string.IsNullOrWhiteSpace(code))
+                    {
+                        result.Add(new RoyalMailServiceOption(code, name ?? code, carrierName));
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Click & Drop services lookup threw");
+        }
+
+        return result.OrderBy(r => r.Carrier).ThenBy(r => r.Name).ToList();
     }
 
     public async Task<byte[]?> GetLabelPdfAsync(string orderIdentifier)
