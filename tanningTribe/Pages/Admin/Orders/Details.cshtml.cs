@@ -17,8 +17,9 @@ public class DetailsModel(StoreDbContext db, WhatsAppService whatsApp, OrderWork
     public bool RoyalMailConfigured => royalMail.IsConfigured;
     public List<Conversation> Conversations { get; set; } = [];
     public List<RoyalMailServiceOption> RoyalMailServices { get; set; } = [];
+    public int LabelWeightGrams { get; set; }
 
-    public async Task<IActionResult> OnGetAsync(int id)
+    public async Task<IActionResult> OnGetAsync(int id, int? weightGrams)
     {
         var order = await db.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
         if (order is null)
@@ -31,7 +32,8 @@ public class DetailsModel(StoreDbContext db, WhatsAppService whatsApp, OrderWork
         Conversations = await db.Conversations.Where(c => c.OrderId == order.Id).OrderByDescending(c => c.LastMessageUtc).ToListAsync();
         if (royalMail.IsConfigured && order.RoyalMailOrderId is null && order.Status is OrderStatus.Paid or OrderStatus.Shipped)
         {
-            RoyalMailServices = await royalMail.GetServicesAsync();
+            LabelWeightGrams = weightGrams is > 0 ? weightGrams.Value : royalMail.DefaultWeightGrams;
+            RoyalMailServices = await royalMail.GetServicesAsync(LabelWeightGrams, RoyalMailService.ParseAddress(order.ShippingAddress).Postcode);
         }
         (MessageTitle, MessagePreview) = order.Status switch
         {
@@ -62,7 +64,24 @@ public class DetailsModel(StoreDbContext db, WhatsAppService whatsApp, OrderWork
             return NotFound();
         }
 
-        var result = await royalMail.CreateOrderAsync(order, weightGrams, serviceCode);
+        // option value is "CODE|PackageFormat"
+        string? format = null;
+        if (serviceCode is not null && serviceCode.Contains('|'))
+        {
+            var parts = serviceCode.Split('|', 2);
+            serviceCode = parts[0];
+            format = parts[1] switch
+            {
+                "Letter" => "letter",
+                "LargeLetter" => "largeLetter",
+                "SmallParcel" => "smallParcel",
+                "MediumParcel" => "mediumParcel",
+                "LargeParcel" => "parcel",
+                _ => null
+            };
+        }
+
+        var result = await royalMail.CreateOrderAsync(order, weightGrams, serviceCode, format);
         if (result.Success)
         {
             order.RoyalMailOrderId = result.OrderIdentifier;

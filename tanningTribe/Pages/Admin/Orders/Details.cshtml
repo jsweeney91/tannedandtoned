@@ -142,25 +142,38 @@
             {
                 @if (Model.Order.Status is OrderStatus.Paid or OrderStatus.Shipped)
                 {
+                    <form method="get" class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                        <label class="small text-muted text-nowrap">Parcel weight</label>
+                        <div class="input-group input-group-sm" style="width: 150px">
+                            <input name="weightGrams" type="number" min="1" value="@Model.LabelWeightGrams" class="form-control" />
+                            <span class="input-group-text">g</span>
+                        </div>
+                        <button class="btn btn-outline-gold btn-sm">Get prices</button>
+                    </form>
                     <form method="post" asp-page-handler="CreateLabel" class="d-flex flex-wrap gap-2 align-items-center">
-                        <input name="weightGrams" type="number" min="1" class="form-control form-control-sm" style="width: 110px" placeholder="Weight (g)" />
-                        <select name="serviceCode" class="form-select form-select-sm" style="width: 230px" required>
+                        <input type="hidden" name="weightGrams" value="@Model.LabelWeightGrams" />
+                        <select name="serviceCode" class="form-select form-select-sm" style="width: 320px" required>
                             @if (Model.RoyalMailServices.Count == 0)
                             {
-                                <option value="">No services found on account</option>
+                                <option value="">No services available for this weight/postcode</option>
                             }
                             else
                             {
                                 <option value="">Choose a service…</option>
-                                @foreach (var s in Model.RoyalMailServices)
+                                @foreach (var group in Model.RoyalMailServices.GroupBy(s => s.PackageFormat))
                                 {
-                                    <option value="@s.Code">@s.Name (@s.Code)</option>
+                                    <optgroup label="@System.Text.RegularExpressions.Regex.Replace(group.Key, "(\\B[A-Z])", " $1")">
+                                        @foreach (var s in group)
+                                        {
+                                            <option value="@($"{s.Code}|{s.PackageFormat}")">@s.Name – @s.Cost.ToString("C")</option>
+                                        }
+                                    </optgroup>
                                 }
                             }
                         </select>
-                        <button class="btn btn-brand btn-sm text-nowrap">Create Royal Mail order</button>
+                        <button class="btn btn-brand btn-sm text-nowrap" @(Model.RoyalMailServices.Count == 0 ? "disabled" : "")>Create Royal Mail order</button>
                     </form>
-                    <p class="small text-muted mt-2 mb-0">Creates the order in Click &amp; Drop. Pay for postage there, then download the label here.</p>
+                    <p class="small text-muted mt-2 mb-0">Prices are for @Model.LabelWeightGrams g. Creates the order in Click &amp; Drop; pay for postage there, then download the label here.</p>
                 }
                 else
                 {

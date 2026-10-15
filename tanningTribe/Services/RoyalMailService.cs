@@ -8,7 +8,7 @@ namespace tanningTribe.Services;
 
 public record RoyalMailOrderResult(bool Success, string Message, string? OrderIdentifier = null, string? TrackingNumber = null);
 
-public record RoyalMailServiceOption(string Code, string Name, string Carrier);
+public record RoyalMailServiceOption(string Code, string Name, string PackageFormat, decimal Cost);
 
 /// <summary>Creates Royal Mail Click &amp; Drop orders and downloads postage labels.</summary>
 public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> options, ILogger<RoyalMailService> logger)
@@ -16,8 +16,9 @@ public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> optio
     private readonly RoyalMailSettings _settings = options.Value;
 
     public bool IsConfigured => _settings.IsConfigured;
+    public int DefaultWeightGrams => _settings.DefaultWeightGrams;
 
-    public async Task<RoyalMailOrderResult> CreateOrderAsync(Order order, int? weightGrams = null, string? serviceCode = null)
+    public async Task<RoyalMailOrderResult> CreateOrderAsync(Order order, int? weightGrams = null, string? serviceCode = null, string? packageFormat = null)
     {
         if (!IsConfigured)
         {
@@ -63,7 +64,7 @@ public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> optio
                         new
                         {
                             weightInGrams = Math.Max(weightGrams ?? _settings.DefaultWeightGrams, 50),
-                            packageFormatIdentifier = _settings.PackageFormat,
+                            packageFormatIdentifier = string.IsNullOrWhiteSpace(packageFormat) ? _settings.PackageFormat : packageFormat,
                             contents = order.Items.Select(i => new
                             {
                                 name = i.ProductName,
@@ -122,8 +123,8 @@ public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> optio
         }
     }
 
-    /// <summary>Lists the shipping services (and their codes) enabled on this Click &amp; Drop account.</summary>
-    public async Task<List<RoyalMailServiceOption>> GetServicesAsync()
+    /// <summary>Lists Royal Mail online-postage services available for a UK parcel of the given weight, with prices.</summary>
+    public async Task<List<RoyalMailServiceOption>> GetServicesAsync(int weightGrams, string? postcode)
     {
         var result = new List<RoyalMailServiceOption>();
         if (!IsConfigured)
@@ -133,41 +134,47 @@ public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> optio
 
         try
         {
-            using var request = BuildRequest(HttpMethod.Get, "services");
+            var query = $"services/olp?country=GBR&weight={Math.Max(weightGrams, 1)}";
+            if (!string.IsNullOrWhiteSpace(postcode))
+            {
+                query += $"&postcode={Uri.EscapeDataString(postcode.Replace(" ", string.Empty))}";
+            }
+
+            using var request = BuildRequest(HttpMethod.Get, query);
             using var response = await http.SendAsync(request);
             var body = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogWarning("Click & Drop services lookup failed ({Status}): {Body}", (int)response.StatusCode, body);
+                logger.LogWarning("Click & Drop OLP services lookup failed ({Status}): {Body}", (int)response.StatusCode, body);
                 return result;
             }
 
             using var json = JsonDocument.Parse(body);
-            foreach (var carrier in json.RootElement.EnumerateArray())
+            if (!json.RootElement.TryGetProperty("services", out var services) || services.ValueKind != JsonValueKind.Array)
             {
-                var carrierName = carrier.TryGetProperty("carrierName", out var cn) ? cn.GetString() ?? "" : "";
-                if (!carrier.TryGetProperty("services", out var services) || services.ValueKind != JsonValueKind.Array)
+                return result;
+            }
+
+            foreach (var s in services.EnumerateArray())
+            {
+                var code = s.TryGetProperty("serviceCode", out var c) ? c.GetString() : null;
+                if (string.IsNullOrWhiteSpace(code))
                 {
                     continue;
                 }
 
-                foreach (var s in services.EnumerateArray())
-                {
-                    var code = s.TryGetProperty("serviceCode", out var c) ? c.GetString() : null;
-                    var name = s.TryGetProperty("serviceName", out var n) ? n.GetString() : null;
-                    if (!string.IsNullOrWhiteSpace(code))
-                    {
-                        result.Add(new RoyalMailServiceOption(code, name ?? code, carrierName));
-                    }
-                }
+                var name = s.TryGetProperty("serviceName", out var n) ? n.GetString() ?? code : code;
+                var format = s.TryGetProperty("packageFormat", out var f) ? f.GetString() ?? "" : "";
+                var cost = s.TryGetProperty("cost", out var co) && co.ValueKind == JsonValueKind.Number ? co.GetDecimal() : 0m;
+                result.Add(new RoyalMailServiceOption(code, name, format, cost));
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Click & Drop services lookup threw");
+            logger.LogError(ex, "Click & Drop OLP services lookup threw");
         }
 
-        return result.OrderBy(r => r.Carrier).ThenBy(r => r.Name).ToList();
+        return result.OrderBy(r => r.Cost).ThenBy(r => r.Name).ToList();
     }
 
     public async Task<byte[]?> GetLabelPdfAsync(string orderIdentifier)
