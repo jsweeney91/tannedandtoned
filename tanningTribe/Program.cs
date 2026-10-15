@@ -67,6 +67,7 @@ builder.Services.AddScoped<OrderWorkflowService>();
 builder.Services.AddScoped<OrderNumberService>();
 builder.Services.Configure<WhatsAppSettings>(builder.Configuration.GetSection("WhatsApp"));
 builder.Services.Configure<PaymentSettings>(builder.Configuration.GetSection("Payment"));
+builder.Services.Configure<BlobStorageSettings>(builder.Configuration.GetSection("BlobStorage"));
 builder.Services.Configure<RoyalMailSettings>(builder.Configuration.GetSection("RoyalMail"));
 builder.Services.AddHttpClient<RoyalMailService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Email"));

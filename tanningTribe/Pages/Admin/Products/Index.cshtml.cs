@@ -34,7 +34,7 @@ public class IndexModel(StoreDbContext db, ImageService images) : PageModel
             return RedirectToPage();
         }
 
-        images.DeleteIfLocal(product.ImageUrl);
+        await images.DeleteIfOwnedAsync(product.ImageUrl);
         db.Products.Remove(product);
         await db.SaveChangesAsync();
         TempData["Message"] = $"\"{product.Name}\" was deleted.";

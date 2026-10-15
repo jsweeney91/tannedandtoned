@@ -149,7 +149,7 @@ public partial class EditModel(StoreDbContext db, ImageService images) : PageMod
 
         if (!string.Equals(previousImage, newImageUrl, StringComparison.Ordinal))
         {
-            images.DeleteIfLocal(previousImage);
+            await images.DeleteIfOwnedAsync(previousImage);
         }
 
         TempData["Message"] = IsNew ? $"\"{product.Name}\" was created." : $"\"{product.Name}\" was updated.";
