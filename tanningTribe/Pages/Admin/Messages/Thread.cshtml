@@ -40,7 +40,18 @@
                     <span>@(outbound ? "You" : (Model.Conversation.CustomerName ?? m.FromAddress)) &rarr; @m.ToAddress</span>
                     <span>@m.SentUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</span>
                 </div>
-                <pre class="wa-preview mb-0">@(m.TextBody ?? StripHtml(m.HtmlBody))</pre>
+                @if (!string.IsNullOrWhiteSpace(m.HtmlBody))
+                {
+                    <iframe class="email-frame w-100 border-0" sandbox="allow-same-origin allow-popups" referrerpolicy="no-referrer" srcdoc="@m.HtmlBody" onload="this.style.height=(this.contentDocument.documentElement.scrollHeight+16)+'px'"></iframe>
+                    @if (!string.IsNullOrWhiteSpace(m.TextBody))
+                    {
+                        <details class="mt-2"><summary class="small text-muted">Plain text</summary><pre class="wa-preview mb-0 mt-2">@m.TextBody</pre></details>
+                    }
+                }
+                else
+                {
+                    <pre class="wa-preview mb-0">@m.TextBody</pre>
+                }
             </div>
         }
 
@@ -60,17 +71,3 @@
         </div>
     </div>
 </div>
-
-@functions {
-    private static string StripHtml(string? html)
-    {
-        if (string.IsNullOrEmpty(html))
-        {
-            return string.Empty;
-        }
-
-        var text = System.Text.RegularExpressions.Regex.Replace(html, "<br\\s*/?>|</p>|</div>", "\n", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        text = System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", string.Empty);
-        return System.Net.WebUtility.HtmlDecode(text).Trim();
-    }
-}
