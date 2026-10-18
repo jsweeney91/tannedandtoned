@@ -1,0 +1,18 @@
+@model tanningTribe.Models.Review
+
+<div class="review-card">
+    <div class="review-stars" aria-label="@Model.Rating out of 5 stars">
+        @for (var i = 1; i <= 5; i++)
+        {
+            <span class="@(i <= Model.Rating ? "on" : "")">&#9733;</span>
+        }
+    </div>
+    <p class="review-body">&ldquo;@Model.Body&rdquo;</p>
+    <div class="review-meta">
+        <span class="review-name">@Model.CustomerName</span>
+        @if (Model.Product is not null)
+        {
+            <span class="text-muted">&middot; <a asp-page="/Shop/Details" asp-route-slug="@Model.Product.Slug" class="link-gold">@Model.Product.Name</a></span>
+        }
+    </div>
+</div>

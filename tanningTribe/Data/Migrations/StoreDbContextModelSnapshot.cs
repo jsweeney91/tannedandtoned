@@ -413,6 +413,52 @@ namespace tanningTribe.Data.Migrations
                     b.ToTable("ReferralCodes");
                 });
 
+            modelBuilder.Entity("tanningTribe.Models.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CustomerEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<bool>("IsApproved")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsFeatured")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("IsApproved", "IsFeatured");
+
+                    b.ToTable("Reviews");
+                });
+
             modelBuilder.Entity("tanningTribe.Models.StoreSettings", b =>
                 {
                     b.Property<int>("Id")
@@ -488,6 +534,16 @@ namespace tanningTribe.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("OwnerOrder");
+                });
+
+            modelBuilder.Entity("tanningTribe.Models.Review", b =>
+                {
+                    b.HasOne("tanningTribe.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("tanningTribe.Models.Conversation", b =>

@@ -1,0 +1,87 @@
+@page "/reviews"
+@model tanningTribe.Pages.Reviews.IndexModel
+@{
+    ViewData["Title"] = "Customer Reviews";
+}
+
+<div class="section-heading text-center mb-4">
+    <p class="brand-tagline mb-1">Real results, real people</p>
+    <h1>Customer Reviews</h1>
+    @if (Model.Reviews.Count > 0)
+    {
+        <p class="text-muted mb-0">
+            <span class="review-stars d-inline-block me-1"><span class="on">&#9733;</span></span>
+            @Model.AverageRating.ToString("0.0") average from @Model.Reviews.Count review@(Model.Reviews.Count == 1 ? "" : "s")
+        </p>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-success text-center">@Model.StatusMessage</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        @if (Model.Reviews.Count == 0)
+        {
+            <div class="bg-white rounded-4 p-5 text-center text-muted">No reviews yet &ndash; be the first to share your glow!</div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var review in Model.Reviews)
+                {
+                    <div class="col-md-6">
+                        <partial name="_ReviewCard" model="review" />
+                    </div>
+                }
+            </div>
+        }
+    </div>
+    <div class="col-lg-4">
+        <div class="bg-white rounded-4 p-4">
+            <h2 class="h5 mb-3">Leave a review</h2>
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger small"></div>
+                <div class="mb-3">
+                    <label asp-for="Input.Name" class="form-label"></label>
+                    <input asp-for="Input.Name" class="form-control" />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Email" class="form-label"></label>
+                    <input asp-for="Input.Email" class="form-control" />
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Rating" class="form-label"></label>
+                    <select asp-for="Input.Rating" class="form-select">
+                        @for (var i = 5; i >= 1; i--)
+                        {
+                            <option value="@i">@(new string('\u2605', i)) @i star@(i == 1 ? "" : "s")</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.Rating" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.ProductId" class="form-label"></label>
+                    <select asp-for="Input.ProductId" asp-items="Model.ProductOptions" class="form-select">
+                        <option value="">General</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Input.Body" class="form-label"></label>
+                    <textarea asp-for="Input.Body" class="form-control" rows="4" maxlength="1000"></textarea>
+                    <span asp-validation-for="Input.Body" class="text-danger"></span>
+                </div>
+                <button type="submit" class="btn btn-brand w-100">Submit review</button>
+                <p class="text-muted small mt-2 mb-0">Reviews are checked before they're published.</p>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -98,6 +98,27 @@
     </div>
 </section>
 
+@if (Model.FeaturedReviews.Count > 0)
+{
+<section class="mb-5">
+    <div class="section-heading d-flex justify-content-between align-items-end">
+        <div>
+            <p class="brand-tagline mb-1">What our customers say</p>
+            <h2 class="mb-0">Glowing Reviews</h2>
+        </div>
+        <a asp-page="/Reviews/Index" class="link-gold">Read all &rarr;</a>
+    </div>
+    <div class="row g-4">
+        @foreach (var review in Model.FeaturedReviews)
+        {
+            <div class="col-md-4">
+                <partial name="_ReviewCard" model="review" />
+            </div>
+        }
+    </div>
+</section>
+}
+
 <section class="referral-banner mb-5">
     <div class="row align-items-center g-4">
         <div class="col-lg-8">

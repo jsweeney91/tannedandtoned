@@ -11,6 +11,7 @@ public class StoreDbContext(DbContextOptions<StoreDbContext> options) : DbContex
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<ReferralCode> ReferralCodes => Set<ReferralCode>();
     public DbSet<StoreSettings> StoreSettings => Set<StoreSettings>();
+    public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
     public DbSet<EmailAttachment> EmailAttachments => Set<EmailAttachment>();
@@ -28,6 +29,8 @@ public class StoreDbContext(DbContextOptions<StoreDbContext> options) : DbContex
         modelBuilder.Entity<ReferralCode>().HasIndex(r => r.OwnerEmail).IsUnique();
         modelBuilder.Entity<ReferralCode>().HasOne(r => r.OwnerOrder).WithMany().HasForeignKey(r => r.OwnerOrderId).OnDelete(DeleteBehavior.SetNull);
         modelBuilder.Entity<Order>().HasIndex(o => o.OrderNumber).IsUnique();
+        modelBuilder.Entity<Review>().HasIndex(r => new { r.IsApproved, r.IsFeatured });
+        modelBuilder.Entity<Review>().HasOne(r => r.Product).WithMany().HasForeignKey(r => r.ProductId).OnDelete(DeleteBehavior.SetNull);
         modelBuilder.Entity<Conversation>().HasIndex(c => c.CustomerEmail);
         modelBuilder.Entity<Conversation>().HasIndex(c => c.LastMessageUtc);
         modelBuilder.Entity<Conversation>().HasOne(c => c.Order).WithMany().HasForeignKey(c => c.OrderId).OnDelete(DeleteBehavior.SetNull);

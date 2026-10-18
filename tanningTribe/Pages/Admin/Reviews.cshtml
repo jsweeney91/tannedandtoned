@@ -1,0 +1,70 @@
+@page
+@model tanningTribe.Pages.Admin.ReviewsModel
+@{
+    ViewData["Title"] = "Reviews";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Customer Reviews</h1>
+    <span class="text-muted small">@Model.Reviews.Count reviews &middot; @Model.PendingCount awaiting approval &middot; <a asp-page="/Reviews/Index" target="_blank">View public page</a></span>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert alert-info">@Model.Message</div>
+}
+
+<div class="bg-white rounded-4 p-3">
+    <table class="table align-middle mb-0">
+        <thead>
+            <tr><th>Customer</th><th>Rating</th><th>Review</th><th>Product</th><th>Date</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Reviews)
+            {
+                <tr>
+                    <td>
+                        <div class="fw-semibold">@r.CustomerName</div>
+                        @if (!string.IsNullOrEmpty(r.CustomerEmail))
+                        {
+                            <small class="text-muted">@r.CustomerEmail</small>
+                        }
+                    </td>
+                    <td class="text-warning text-nowrap">@(new string('\u2605', r.Rating))<span class="text-muted">@(new string('\u2605', 5 - r.Rating))</span></td>
+                    <td style="max-width: 420px">@r.Body</td>
+                    <td>@(r.Product?.Name ?? "—")</td>
+                    <td class="text-nowrap">@r.CreatedUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                    <td>
+                        @if (!r.IsApproved)
+                        {
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        }
+                        else if (r.IsFeatured)
+                        {
+                            <span class="badge bg-success">Featured</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Approved</span>
+                        }
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <form method="post" asp-page-handler="Approve" asp-route-id="@r.Id" class="d-inline">
+                            <button type="submit" class="btn btn-outline-gold btn-sm">@(r.IsApproved ? "Hide" : "Approve")</button>
+                        </form>
+                        <form method="post" asp-page-handler="Feature" asp-route-id="@r.Id" class="d-inline">
+                            <button type="submit" class="btn btn-outline-gold btn-sm">@(r.IsFeatured ? "Unfeature" : "Feature")</button>
+                        </form>
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@r.Id" class="d-inline" onsubmit="return confirm('Delete this review?');">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (Model.Reviews.Count == 0)
+            {
+                <tr><td colspan="7" class="text-center text-muted py-4">No reviews have been submitted yet.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
