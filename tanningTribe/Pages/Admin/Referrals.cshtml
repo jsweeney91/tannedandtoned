@@ -9,6 +9,63 @@
     <span class="text-muted small">@Model.Codes.Count codes &middot; @Model.TotalUses total uses &middot; @Model.ActiveReferrers referrers with at least one use</span>
 </div>
 
+@if (!string.IsNullOrEmpty(Model.StatusMessage))
+{
+    <div class="alert alert-info">@Model.StatusMessage</div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-4">
+        <div class="bg-white rounded-4 p-3 h-100">
+            <h2 class="h6">Default discount</h2>
+            <p class="text-muted small">Applied to codes created automatically when a customer's order is marked as paid.</p>
+            <form method="post" asp-page-handler="SaveDefault" class="d-flex gap-2 align-items-start">
+                <div class="input-group">
+                    <input asp-for="DefaultDiscountPercent" type="number" min="1" max="100" class="form-control" />
+                    <span class="input-group-text">%</span>
+                </div>
+                <button type="submit" class="btn btn-brand">Save</button>
+            </form>
+            <span asp-validation-for="DefaultDiscountPercent" class="text-danger small"></span>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="bg-white rounded-4 p-3 h-100">
+            <h2 class="h6">Add a code</h2>
+            <p class="text-muted small">Give a customer a code without waiting for an order. Leave the code blank to generate one.</p>
+            <form method="post" asp-page-handler="Create" class="row g-2">
+                <div class="col-12">
+                    <input asp-for="NewCode.Email" class="form-control" placeholder="customer@example.com" />
+                    <span asp-validation-for="NewCode.Email" class="text-danger small"></span>
+                </div>
+                <div class="col-7">
+                    <input asp-for="NewCode.Code" class="form-control text-uppercase" placeholder="Code (optional)" />
+                    <span asp-validation-for="NewCode.Code" class="text-danger small"></span>
+                </div>
+                <div class="col-5">
+                    <div class="input-group">
+                        <input asp-for="NewCode.DiscountPercent" type="number" min="1" max="100" class="form-control" />
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <span asp-validation-for="NewCode.DiscountPercent" class="text-danger small"></span>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-brand">Create code</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-3">
+        <div class="bg-white rounded-4 p-3 h-100">
+            <h2 class="h6">Existing customers</h2>
+            <p class="text-muted small">@Model.CustomersWithoutCode paid customer(s) don't have a code yet.</p>
+            <form method="post" asp-page-handler="Backfill">
+                <button type="submit" class="btn btn-outline-gold" disabled="@(Model.CustomersWithoutCode == 0)">Create codes for them</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="bg-white rounded-4 p-3">
     <table class="table align-middle mb-0">
         <thead>
@@ -20,8 +77,25 @@
                 <tr>
                     <td><code class="fs-6">@r.Code</code></td>
                     <td>@r.OwnerEmail</td>
-                    <td><a asp-page="/Admin/Orders/Details" asp-route-id="@r.OwnerOrderId">@(r.OwnerOrder?.OrderNumber ?? $"#{r.OwnerOrderId}")</a></td>
-                    <td>@r.DiscountPercent%</td>
+                    <td>
+                        @if (r.OwnerOrderId is int orderId)
+                        {
+                            <a asp-page="/Admin/Orders/Details" asp-route-id="@orderId">@(r.OwnerOrder?.OrderNumber ?? $"#{orderId}")</a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Added manually</span>
+                        }
+                    </td>
+                    <td>
+                        <form method="post" asp-page-handler="Update" asp-route-id="@r.Id" class="d-flex gap-1" style="max-width: 160px">
+                            <div class="input-group input-group-sm">
+                                <input type="number" name="discountPercent" value="@r.DiscountPercent" min="1" max="100" class="form-control" />
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <button type="submit" class="btn btn-outline-gold btn-sm">Save</button>
+                        </form>
+                    </td>
                     <td class="fw-semibold">@r.TimesUsed</td>
                     <td>@r.CreatedUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
                     <td>
@@ -43,7 +117,7 @@
             }
             @if (Model.Codes.Count == 0)
             {
-                <tr><td colspan="8" class="text-center text-muted py-4">No referral codes have been generated yet.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-4">No referral codes have been created yet.</td></tr>
             }
         </tbody>
     </table>

@@ -226,6 +226,10 @@ namespace tanningTribe.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
 
+                    b.Property<decimal>("PostageAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("ReferralCodeUsed")
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
@@ -390,7 +394,7 @@ namespace tanningTribe.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("varchar(200)");
 
-                    b.Property<int>("OwnerOrderId")
+                    b.Property<int?>("OwnerOrderId")
                         .HasColumnType("int");
 
                     b.Property<int>("TimesUsed")
@@ -401,10 +405,28 @@ namespace tanningTribe.Data.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.HasIndex("OwnerOrderId")
+                    b.HasIndex("OwnerEmail")
                         .IsUnique();
 
+                    b.HasIndex("OwnerOrderId");
+
                     b.ToTable("ReferralCodes");
+                });
+
+            modelBuilder.Entity("tanningTribe.Models.StoreSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DefaultReferralDiscountPercent")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StoreSettings");
                 });
 
             modelBuilder.Entity("tanningTribe.Models.Conversation", b =>
@@ -463,8 +485,7 @@ namespace tanningTribe.Data.Migrations
                     b.HasOne("tanningTribe.Models.Order", "OwnerOrder")
                         .WithMany()
                         .HasForeignKey("OwnerOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("OwnerOrder");
                 });

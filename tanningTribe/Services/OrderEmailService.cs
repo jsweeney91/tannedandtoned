@@ -211,6 +211,11 @@ public class OrderEmailService(
                 sb.Append($"<tr><td colspan=\"2\" style=\"padding:8px 0;color:#2e7d32;font-size:14px;\">Referral discount ({WebUtility.HtmlEncode(order.ReferralCodeUsed)})</td><td align=\"right\" style=\"padding:8px 0;color:#2e7d32;font-size:14px;\">-{order.DiscountAmount:C}</td></tr>");
             }
 
+            if (order.PostageAmount > 0)
+            {
+                sb.Append($"<tr><td colspan=\"2\" style=\"padding:8px 0;font-size:14px;\">Postage</td><td align=\"right\" style=\"padding:8px 0;font-size:14px;\">{order.PostageAmount:C}</td></tr>");
+            }
+
             sb.Append($"<tr><td colspan=\"2\" style=\"padding:10px 0;font-weight:bold;\">Total</td><td align=\"right\" style=\"padding:10px 0;font-weight:bold;\">{order.Total:C}</td></tr>");
             sb.Append("</table></td></tr>");
         }

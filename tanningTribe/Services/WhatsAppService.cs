@@ -80,6 +80,11 @@ public partial class WhatsAppService(
             sb.AppendLine($"• Referral discount ({order.ReferralCodeUsed}) – -{order.DiscountAmount:C}");
         }
 
+        if (order.PostageAmount > 0)
+        {
+            sb.AppendLine($"• Postage – {order.PostageAmount:C}");
+        }
+
         sb.AppendLine();
         sb.AppendLine($"*Total to pay: {order.Total:C}*");
         sb.AppendLine();
@@ -122,7 +127,9 @@ public partial class WhatsAppService(
         if (referral is not null)
         {
             sb.AppendLine();
-            sb.AppendLine($"Here's your personal Friends & Family code: *{referral.Code}*");
+            sb.AppendLine(referral.OwnerOrderId == order.Id
+                ? $"Here's your personal Friends & Family code: *{referral.Code}*"
+                : $"Don't forget your personal Friends & Family code: *{referral.Code}*");
             sb.AppendLine($"Share it with friends – anyone who uses it gets {referral.DiscountPercent}% off their order at tannedandtoned.co.uk.");
         }
         sb.AppendLine();

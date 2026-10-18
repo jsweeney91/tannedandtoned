@@ -10,6 +10,7 @@ public class StoreDbContext(DbContextOptions<StoreDbContext> options) : DbContex
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<ReferralCode> ReferralCodes => Set<ReferralCode>();
+    public DbSet<StoreSettings> StoreSettings => Set<StoreSettings>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<EmailMessage> EmailMessages => Set<EmailMessage>();
     public DbSet<EmailAttachment> EmailAttachments => Set<EmailAttachment>();
@@ -22,8 +23,10 @@ public class StoreDbContext(DbContextOptions<StoreDbContext> options) : DbContex
         modelBuilder.Entity<Order>().Property(o => o.Total).HasPrecision(18, 2);
         modelBuilder.Entity<Order>().Property(o => o.DiscountAmount).HasPrecision(18, 2);
         modelBuilder.Entity<OrderItem>().Property(i => i.UnitPrice).HasPrecision(18, 2);
+        modelBuilder.Entity<Order>().Property(o => o.PostageAmount).HasPrecision(18, 2);
         modelBuilder.Entity<ReferralCode>().HasIndex(r => r.Code).IsUnique();
-        modelBuilder.Entity<ReferralCode>().HasIndex(r => r.OwnerOrderId).IsUnique();
+        modelBuilder.Entity<ReferralCode>().HasIndex(r => r.OwnerEmail).IsUnique();
+        modelBuilder.Entity<ReferralCode>().HasOne(r => r.OwnerOrder).WithMany().HasForeignKey(r => r.OwnerOrderId).OnDelete(DeleteBehavior.SetNull);
         modelBuilder.Entity<Order>().HasIndex(o => o.OrderNumber).IsUnique();
         modelBuilder.Entity<Conversation>().HasIndex(c => c.CustomerEmail);
         modelBuilder.Entity<Conversation>().HasIndex(c => c.LastMessageUtc);

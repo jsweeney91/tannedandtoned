@@ -41,7 +41,7 @@
                     <label asp-for="Input.ReferralCode" class="form-label">Referral code <span class="text-muted">(optional)</span></label>
                     <input asp-for="Input.ReferralCode" class="form-control text-uppercase" placeholder="TANXXXXX" />
                     <span asp-validation-for="Input.ReferralCode" class="text-danger"></span>
-                    <div class="form-text">Have a code from a friend? Get @ReferralService.DefaultDiscountPercent% off your order.</div>
+                    Get @Model.DefaultDiscountPercent% off your order.
                 </div>
                 <div class="mb-4">
                     <label asp-for="Input.Notes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
@@ -62,7 +62,15 @@
                     <span>@item.LineTotal.ToString("C")</span>
                 </div>
             }
-            <div class="d-flex justify-content-between pt-3 mt-2 border-top fw-semibold">
+            <div class="d-flex justify-content-between pt-3 mt-2 border-top">
+                <span>Subtotal</span>
+                <span>@Model.Subtotal.ToString("C")</span>
+            </div>
+            <div class="d-flex justify-content-between py-1">
+                <span>Postage</span>
+                <span>@Model.Postage.ToString("C")</span>
+            </div>
+            <div class="d-flex justify-content-between pt-2 mt-1 border-top fw-semibold">
                 <span>Total</span>
                 <span>@Model.Total.ToString("C")</span>
             </div>

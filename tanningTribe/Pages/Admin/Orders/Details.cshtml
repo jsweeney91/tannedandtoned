@@ -71,6 +71,10 @@
                     {
                         <tr><td colspan="3" class="text-end text-success">Referral discount (@Model.Order.ReferralCodeUsed)</td><td class="text-end text-success">-@Model.Order.DiscountAmount.ToString("C")</td></tr>
                     }
+                    @if (Model.Order.PostageAmount > 0)
+                    {
+                        <tr><td colspan="3" class="text-end">Postage</td><td class="text-end">@Model.Order.PostageAmount.ToString("C")</td></tr>
+                    }
                     <tr class="fw-semibold"><td colspan="3" class="text-end">Total</td><td class="text-end">@Model.Order.Total.ToString("C")</td></tr>
                 </tfoot>
             </table>

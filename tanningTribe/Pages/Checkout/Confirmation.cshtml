@@ -25,6 +25,13 @@
                 <span>-@Model.Order.DiscountAmount.ToString("C")</span>
             </div>
         }
+        @if (Model.Order.PostageAmount > 0)
+        {
+            <div class="d-flex justify-content-between py-1">
+                <span>Postage</span>
+                <span>@Model.Order.PostageAmount.ToString("C")</span>
+            </div>
+        }
         <div class="d-flex justify-content-between pt-3 mt-2 border-top fw-semibold">
             <span>Total</span>
             <span>@Model.Order.Total.ToString("C")</span>

@@ -56,9 +56,14 @@ public class Order
     [MaxLength(500)]
     public string? WhatsAppError { get; set; }
 
+    /// <summary>Flat postage charge added to every order.</summary>
+    public const decimal StandardPostage = 5m;
+
     public decimal Total { get; set; }
 
     public decimal DiscountAmount { get; set; }
+
+    public decimal PostageAmount { get; set; }
 
     [MaxLength(20)]
     public string? ReferralCodeUsed { get; set; }

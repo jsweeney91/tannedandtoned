@@ -34,17 +34,20 @@ public class IndexModel(StoreDbContext db, CartService cart, ReferralService ref
     public InputModel Input { get; set; } = new();
 
     public List<CartItem> Items { get; private set; } = [];
-    public decimal Total { get; private set; }
+    public int DefaultDiscountPercent { get; private set; } = ReferralService.FallbackDefaultDiscountPercent;
+    public decimal Subtotal { get; private set; }
+    public decimal Postage => Order.StandardPostage;
+    public decimal Total => Subtotal + Postage;
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGetAsync()
     {
-        Load();
+        await LoadAsync();
         return Items.Count == 0 ? RedirectToPage("/Cart/Index") : Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        Load();
+        await LoadAsync();
         if (Items.Count == 0)
         {
             return RedirectToPage("/Cart/Index");
@@ -72,7 +75,7 @@ public class IndexModel(StoreDbContext db, CartService cart, ReferralService ref
             }
         }
 
-        var discount = referral is null ? 0m : Math.Round(Total * referral.DiscountPercent / 100m, 2);
+        var discount = referral is null ? 0m : Math.Round(Subtotal * referral.DiscountPercent / 100m, 2);
 
         var order = new Order
         {
@@ -82,8 +85,9 @@ public class IndexModel(StoreDbContext db, CartService cart, ReferralService ref
             WhatsAppNumber = normalizedNumber,
             ShippingAddress = Input.ShippingAddress.Trim(),
             CustomerNotes = string.IsNullOrWhiteSpace(Input.Notes) ? null : Input.Notes.Trim(),
-            Total = Total - discount,
+            Total = Subtotal - discount + Postage,
             DiscountAmount = discount,
+            PostageAmount = Postage,
             ReferralCodeUsed = referral?.Code,
             Status = OrderStatus.PendingApproval,
             Items = Items.Select(i => new OrderItem
@@ -105,9 +109,10 @@ public class IndexModel(StoreDbContext db, CartService cart, ReferralService ref
         return RedirectToPage("/Checkout/Confirmation", new { id = order.Id });
     }
 
-    private void Load()
+    private async Task LoadAsync()
     {
         Items = cart.GetItems();
-        Total = cart.Total();
+        Subtotal = cart.Total();
+        DefaultDiscountPercent = await referrals.GetDefaultDiscountPercentAsync();
     }
 }
