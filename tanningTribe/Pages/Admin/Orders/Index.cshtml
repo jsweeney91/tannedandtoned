@@ -25,7 +25,7 @@
     <div class="alert alert-danger py-2">@err</div>
 }
 
-<div class="bg-white rounded-4 p-3">
+<div class="bg-white rounded-4 p-3 table-responsive">
     <table class="table align-middle mb-0">
         <thead>
             <tr><th>#</th><th>Date</th><th>Customer</th><th>WhatsApp</th><th>Items</th><th>Referral</th><th>Status</th><th class="text-end">Total</th><th class="text-end">Actions</th></tr>
@@ -35,7 +35,7 @@
             {
                 <tr class="@(o.Status == OrderStatus.PendingApproval ? "table-active" : "")">
                     <td><a asp-page="/Admin/Orders/Details" asp-route-id="@o.Id"><strong>@o.OrderNumber</strong></a></td>
-                    <td>@o.CreatedUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                    <td class="text-nowrap">@o.CreatedUtc.ToLocalTime().ToString("dd MMM yyyy")<br /><small class="text-muted">@o.CreatedUtc.ToLocalTime().ToString("HH:mm")</small></td>
                     <td>@o.CustomerName<br /><small class="text-muted">@o.CustomerEmail</small></td>
                     <td><small><a href="https://wa.me/@o.WhatsAppNumber.TrimStart('+')" target="_blank" rel="noopener">@o.WhatsAppNumber</a></small></td>
                     <td>@o.Items.Sum(i => i.Quantity)</td>

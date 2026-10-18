@@ -666,6 +666,15 @@ code {
   --bs-table-bg-state: rgba(216,173,90,.08);
 }
 
+/* Admin tables: scroll inside the card instead of spilling out of the page */
+.admin-content {
+  min-width: 0;
+}
+
+.table-responsive.rounded-4 {
+  scrollbar-width: thin;
+}
+
 /* Reveal animation */
 main > section {
   animation: rise .6s ease both;
