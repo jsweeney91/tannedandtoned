@@ -62,7 +62,7 @@
             </div>
         </nav>
     </header>
-    <div class="container">
+    <div class="@(ViewData["Fluid"] is true ? "container-fluid px-4" : "container")">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>

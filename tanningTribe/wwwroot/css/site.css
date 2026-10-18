@@ -606,6 +606,14 @@ a:hover {
   margin-bottom: .25rem;
 }
 
+.admin-content .table {
+  font-size: .9rem;
+}
+
+.admin-content .table > :not(caption) > * > * {
+  padding: .55rem .5rem;
+}
+
 .form-select {
   background-color: var(--brand-black);
   color: var(--brand-text);

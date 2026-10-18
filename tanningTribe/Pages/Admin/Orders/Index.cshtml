@@ -28,7 +28,7 @@
 <div class="bg-white rounded-4 p-3 table-responsive">
     <table class="table align-middle mb-0">
         <thead>
-            <tr><th>#</th><th>Date</th><th>Customer</th><th>WhatsApp</th><th>Items</th><th>Referral</th><th>Status</th><th class="text-end">Total</th><th class="text-end">Actions</th></tr>
+            <tr><th>#</th><th>Date</th><th>Customer</th><th>WhatsApp</th><th>Status</th><th class="text-end">Total</th><th class="text-end">Actions</th></tr>
         </thead>
         <tbody>
             @foreach (var o in Model.Orders)
@@ -38,8 +38,6 @@
                     <td class="text-nowrap">@o.CreatedUtc.ToLocalTime().ToString("dd MMM yyyy")<br /><small class="text-muted">@o.CreatedUtc.ToLocalTime().ToString("HH:mm")</small></td>
                     <td>@o.CustomerName<br /><small class="text-muted">@o.CustomerEmail</small></td>
                     <td><small><a href="https://wa.me/@o.WhatsAppNumber.TrimStart('+')" target="_blank" rel="noopener">@o.WhatsAppNumber</a></small></td>
-                    <td>@o.Items.Sum(i => i.Quantity)</td>
-                    <td>@(o.ReferralCodeUsed ?? "—")</td>
                     <td>
                         <partial name="_OrderStatusBadge" model="o.Status" />
                         @if (o.Status is not OrderStatus.PendingApproval and not OrderStatus.Rejected && o.WhatsAppSentUtc is null)
@@ -47,7 +45,10 @@
                             <br /><small class="text-warning">WhatsApp not sent</small>
                         }
                     </td>
-                    <td class="text-end">@o.Total.ToString("C")</td>
+                    <td class="text-end text-nowrap">
+                        @o.Total.ToString("C")
+                        <br /><small class="text-muted">@o.Items.Sum(i => i.Quantity) item@(o.Items.Sum(i => i.Quantity) == 1 ? "" : "s")@(o.ReferralCodeUsed is null ? "" : $" · {o.ReferralCodeUsed}")</small>
+                    </td>
                     <td class="text-end text-nowrap">
                         @if (o.Status == OrderStatus.PendingApproval)
                         {
@@ -67,7 +68,7 @@
                         else if (o.Status == OrderStatus.Paid)
                         {
                             <form method="post" asp-page-handler="MarkShipped" asp-route-id="@o.Id" asp-route-status="@Model.Status" class="d-inline-flex gap-1">
-                                <input name="trackingNumber" class="form-control form-control-sm" style="width: 150px" placeholder="Tracking no." autocomplete="off" />
+                                <input name="trackingNumber" class="form-control form-control-sm" style="width: 120px" placeholder="Tracking no." autocomplete="off" />
                                 <button class="btn btn-brand btn-sm">Mark shipped</button>
                             </form>
                         }
@@ -81,7 +82,7 @@
             }
             @if (Model.Orders.Count == 0)
             {
-                <tr><td colspan="9" class="text-center text-muted py-4">No orders here.</td></tr>
+                <tr><td colspan="7" class="text-center text-muted py-4">No orders here.</td></tr>
             }
         </tbody>
     </table>
