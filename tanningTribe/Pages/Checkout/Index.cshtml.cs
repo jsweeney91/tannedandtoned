@@ -59,6 +59,11 @@ public class IndexModel(StoreDbContext db, CartService cart, ReferralService ref
             ModelState.AddModelError("Input.WhatsAppNumber", "Please enter a valid WhatsApp number.");
         }
 
+        if (string.IsNullOrWhiteSpace(RoyalMailService.ParseAddress(Input.ShippingAddress).Postcode))
+        {
+            ModelState.AddModelError("Input.ShippingAddress", "Please include a UK postcode in your delivery address.");
+        }
+
         if (!ModelState.IsValid)
         {
             return Page();

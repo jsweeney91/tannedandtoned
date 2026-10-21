@@ -11,7 +11,7 @@ public record RoyalMailOrderResult(bool Success, string Message, string? OrderId
 public record RoyalMailServiceOption(string Code, string Name, string PackageFormat, decimal Cost);
 
 /// <summary>Creates Royal Mail Click &amp; Drop orders and downloads postage labels.</summary>
-public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> options, ILogger<RoyalMailService> logger)
+public partial class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> options, ILogger<RoyalMailService> logger)
 {
     private readonly RoyalMailSettings _settings = options.Value;
 
@@ -212,12 +212,13 @@ public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> optio
         return request;
     }
 
-    /// <summary>Splits a free-text address into Click &amp; Drop fields. Expects the postcode on the last line and the town on the line before it.</summary>
+    /// <summary>Splits a free-text address into Click &amp; Drop fields. Finds the UK postcode wherever it appears, treats the line before it as the town and ignores a trailing country line.</summary>
     internal static (string Line1, string? Line2, string? Line3, string City, string Postcode) ParseAddress(string address)
     {
         var lines = address
             .Replace("\r", "")
             .Split(['\n', ','], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(l => !IsCountry(l))
             .ToList();
 
         if (lines.Count == 0)
@@ -225,8 +226,32 @@ public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> optio
             return ("", null, null, "", "");
         }
 
-        var postcode = lines[^1].ToUpperInvariant();
-        lines.RemoveAt(lines.Count - 1);
+        var postcode = "";
+        for (var i = lines.Count - 1; i >= 0; i--)
+        {
+            var match = UkPostcode().Match(lines[i]);
+            if (!match.Success)
+            {
+                continue;
+            }
+
+            postcode = FormatPostcode(match.Value);
+            var remainder = lines[i].Remove(match.Index, match.Length).Trim().TrimEnd(',').Trim();
+            if (remainder.Length == 0)
+            {
+                lines.RemoveAt(i);
+            }
+            else
+            {
+                lines[i] = remainder;
+            }
+            break;
+        }
+
+        if (postcode.Length == 0)
+        {
+            return (lines[0], lines.Count > 1 ? lines[1] : null, lines.Count > 2 ? string.Join(", ", lines.Skip(2)) : null, "", "");
+        }
 
         var city = lines.Count > 0 ? lines[^1] : "";
         if (lines.Count > 0)
@@ -239,6 +264,21 @@ public class RoyalMailService(HttpClient http, IOptions<RoyalMailSettings> optio
         var line3 = lines.Count > 2 ? string.Join(", ", lines.Skip(2)) : null;
         return (line1, line2, line3, city, postcode);
     }
+
+    private static string FormatPostcode(string raw)
+    {
+        var compact = raw.Replace(" ", string.Empty).ToUpperInvariant();
+        return compact.Length > 3 ? $"{compact[..^3]} {compact[^3..]}" : compact;
+    }
+
+    private static bool IsCountry(string line)
+    {
+        var l = line.Trim().ToUpperInvariant().TrimEnd('.');
+        return l is "UK" or "U.K" or "GB" or "GREAT BRITAIN" or "UNITED KINGDOM" or "ENGLAND" or "SCOTLAND" or "WALES" or "NORTHERN IRELAND";
+    }
+
+    [System.Text.RegularExpressions.GeneratedRegex(@"\b(GIR\s?0AA|[A-PR-UWYZ][A-HK-Y]?\d[A-Z\d]?\s*\d[ABD-HJLNP-UW-Z]{2})\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase)]
+    private static partial System.Text.RegularExpressions.Regex UkPostcode();
 
     private static string Truncate(string s) => s.Length <= 300 ? s : s[..300] + "…";
 }
