@@ -65,13 +65,16 @@ public partial class RoyalMailService(HttpClient http, IOptions<RoyalMailSetting
                         {
                             weightInGrams = Math.Max(weightGrams ?? _settings.DefaultWeightGrams, 50),
                             packageFormatIdentifier = string.IsNullOrWhiteSpace(packageFormat) ? _settings.PackageFormat : packageFormat,
-                            contents = order.Items.Select(i => new
+                            contents = new[]
                             {
-                                name = i.ProductName,
-                                quantity = i.Quantity,
-                                unitValue = i.UnitPrice,
-                                unitWeightInGrams = 0
-                            }).ToArray()
+                                new
+                                {
+                                    name = "Health and beauty",
+                                    quantity = 1,
+                                    unitValue = order.Total,
+                                    unitWeightInGrams = 0
+                                }
+                            }
                         }
                     },
                     postageDetails = new
