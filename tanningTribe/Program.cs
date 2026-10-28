@@ -122,7 +122,7 @@ app.UseStaticFiles(); // serves runtime uploads (product images) that aren't in 
 app.MapRazorPages()
    .WithStaticAssets();
 
-app.MapPost("/webhooks/resend", async (HttpRequest request, ResendService resend, ConversationService conversations, OrderEmailService emails, ILogger<Program> logger) =>
+app.MapPost("/webhooks/resend", async (HttpRequest request, ResendService resend, ConversationService conversations, OrderEmailService emails, Microsoft.Extensions.Options.IOptions<EmailSettings> emailOptions, ILogger<Program> logger) =>
 {
     using var reader = new StreamReader(request.Body);
     var payload = await reader.ReadToEndAsync();
@@ -141,6 +141,18 @@ app.MapPost("/webhooks/resend", async (HttpRequest request, ResendService resend
     }
 
     var inbound = ResendService.ParseInbound(data);
+
+    // Resend sends one webhook feed for every domain on the account; only handle mail addressed to our domain.
+    var settings = emailOptions.Value;
+    var recipients = data.TryGetProperty("to", out var toProp) && toProp.ValueKind == System.Text.Json.JsonValueKind.Array
+        ? toProp.EnumerateArray().Select(x => x.GetString() ?? string.Empty).ToArray()
+        : [inbound.To];
+    if (!recipients.Any(settings.IsForInboundDomain))
+    {
+        logger.LogInformation("Ignoring inbound email {EmailId} to {To}: not addressed to {Domain}", inbound.EmailId, string.Join(", ", recipients), settings.InboundDomain);
+        return Results.Ok();
+    }
+
     if (!string.IsNullOrEmpty(inbound.EmailId))
     {
         // the webhook payload only carries metadata; fetch the full email (body + attachments)
