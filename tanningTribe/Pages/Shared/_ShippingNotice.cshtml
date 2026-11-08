@@ -1,0 +1,13 @@
+@{
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    var noticeStart = new DateOnly(2026, 11, 7);
+    var noticeEnd = new DateOnly(2026, 11, 14);
+    var dispatchDate = new DateOnly(2026, 11, 16);
+    var showNotice = today <= noticeEnd;
+}
+@if (showNotice)
+{
+    <div class="alert alert-warning text-center rounded-0 mb-0 py-2 small" role="alert">
+        <strong>Shipping notice:</strong> any orders placed between <strong>@noticeStart.ToString("dd/MM/yyyy")</strong> and <strong>@noticeEnd.ToString("dd/MM/yyyy")</strong> will be sent out on <strong>@dispatchDate.ToString("dd/MM/yyyy")</strong>.
+    </div>
+}

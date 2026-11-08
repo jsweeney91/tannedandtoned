@@ -7,6 +7,10 @@
 
 <h1 class="h3 mb-4">Your Cart</h1>
 
+<div class="mb-4 rounded-3 overflow-hidden">
+    <partial name="_ShippingNotice" />
+</div>
+
 @if (Model.Items.Count == 0)
 {
     <div class="bg-white rounded-4 p-5 text-center">
